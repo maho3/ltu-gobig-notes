@@ -20,29 +20,34 @@ from os.path import join
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
 _WDIR = '/work/hdd/bdne/maho3/cmass-ili'
-_DEFAULT_BASEDIR     = f'{_WDIR}/quijotelike/fastpm_charm6/models/galaxy'
-_DEFAULT_TESTDIR     = f'{_WDIR}/quijote/nbody_hodz_gridnoise/models/galaxy'
+_DEFAULT_BASEDIR = f'{_WDIR}/quijotelike/fastpm_charm6/models/galaxy'
+_DEFAULT_TESTDIR = f'{_WDIR}/quijote/nbody_hodz_gridnoise/models/galaxy'
 _DEFAULT_NOISES_PATH = f'{_WDIR}/noise_priors/noisegrid.csv'
 
 SUMMARIES = [
     'zPk0+zPk2+zPk4',
     'zPk0+zPk2+zPk4+zBk0',
+    'zPk0+zPk2+zPk4+zEqBk0',
 ]
 
 KMINMAX_PAIRS = [
     (0.0, 0.2),
+    (0.0, 0.3),
     (0.0, 0.4),
 ]
+
 
 def _parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--basedir',     default=_DEFAULT_BASEDIR)
     p.add_argument('--testdir',     default=_DEFAULT_TESTDIR)
     p.add_argument('--noises-path', default=_DEFAULT_NOISES_PATH)
-    p.add_argument('--outdir',      default=join(os.path.dirname(os.path.abspath(__file__)), 'figures'))
+    p.add_argument(
+        '--outdir',      default=join(os.path.dirname(os.path.abspath(__file__)), 'figures'))
     return p.parse_args()
 
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 matplotlib.use('Agg')
 matplotlib.rcParams.update({
@@ -311,7 +316,8 @@ def plot_median_coverage_heatmap(samples, theta, noiseidx, noises, s, figdir, la
             idx = np.argwhere(noiseidx == i).flatten()
             if len(idx) == 0:
                 continue
-            heatmap[it, ir] = median_coverage(samples[:, idx, p], theta[idx, p])
+            heatmap[it, ir] = median_coverage(
+                samples[:, idx, p], theta[idx, p])
 
         im = ax.imshow(heatmap, vmin=0, vmax=1, cmap='RdBu', origin='upper')
         for i in range(n_trans):

@@ -1,4 +1,4 @@
-# 2026-06-12_self_quijotelike-fastpm_charm6
+# Self-consistent: quijotelike/fastpm_charm6
 **Date**: 2026-06-12
 **Type**: Self-consistent
 **Suite**: quijotelike/fastpm_charm6
@@ -10,21 +10,11 @@
 **Notes**: 
 
 ## Overview
-- kmax sweep shows well-calibrated posteriors (median coverage ~0.50 for both parameters) across all kmax values with continuous stdev improvement as kmax increases; no plateau observed.
-- Feature sweep reveals training convergence issues: adding equilateral bispectrum (EqBk0) to the feature set causes σ8 stdev to degrade (~0.024 → ~0.035) despite higher feature dimensionality, driven by sub-optimal optuna training (lower final log-prob vs. zBk0 model).
-- Ωm constraints improve monotonically with kmax; σ8 shows larger stdev overall but remains well-calibrated throughout both sweeps.
-
-## Findings
-
-### kmax sweep — zPk0+zPk2+zPk4
-- Stdev for Ωm decreases monotonically from ~0.026 (kmax=0.1) to ~0.015 (kmax=0.4); σ8 decreases from ~0.095 to ~0.025 over the same range. No plateau detected; constraining power continues to improve at kmax=0.4.
-- Calibration holds: Median coverage fraction (true fraction in 50% credible interval) stays centered near 0.50 for both parameters across all kmax values. 68% coverage fraction (16–84th percentile) hovers near 0.70, consistent with well-calibrated posteriors.
-- No evidence of stdev saturation or calibration breakdown across the kmax range.
-
-### Feature sweep — kmax=0.4
-- Adding zPk2+zPk4 to zPk0 improves both Ωm (0.0195 → 0.0145) and σ8 (0.070 → 0.050) stdev. Further addition of zBk0 yields additional gains: Ωm ~0.0135, σ8 ~0.024. Adding zEqBk0 instead reverses gains for σ8, increasing from ~0.024 to ~0.035, while Ωm shows marginal degradation (0.0135 → 0.0175).
-- The σ8 stdev degradation with zEqBk0 is **not** information saturation but rather a **training convergence failure**: optuna optimization for the zEqBk0 model reaches a plateau at lower validation log-probability (~10.6) compared to zBk0 (~11.0), indicating the optimizer struggled to find as good a solution in the higher-dimensional feature space.
-- Stdev scatter across cosmology parameter space (stdev_vs_theta.png) shows the σ8 broadening is uniform across all tested σ8 values (0.65–0.95), ruling out localized cosmology-dependent effects and supporting the hypothesis of a general optimization or feature conditioning issue.
+- Calibration holds across all kmax values and all summary configurations; both Ωm and σ8 maintain median coverage at 0.50 and 68% interval fractions near 0.68 throughout.
+- Ωm constraining power (stdev) saturates by kmax=0.2 (Δωm ≈ 0.020) with diminishing improvement beyond that; σ8 continues to benefit from higher kmax, improving from Δσ8 ≈ 0.084 at kmax=0.1 to ≈ 0.067 at kmax=0.4.
+- Adding bispectrum features (zBk0, zEqBk0) at kmax=0.4 dramatically improves σ8 constraints — from Δσ8 ≈ 0.071 (zPk0 alone) to ≈ 0.021 (zPk024+zEqBk0) — a monotonic ~3× improvement.
+- Ωm feature scaling is non-monotonic: stdev decreases from zPk0 to zPk024, but worsens slightly when adding zBk0 or zEqBk0, suggesting some redundancy or degeneracy in Ωm extraction when bispectra are included alongside power spectrum multipoles.
+- No sweeps are flagged for calibration failure or training instability.
 
 ## Figures
 
@@ -61,6 +51,22 @@
 </details>
 
 ### Zoom-ins
+
+<details>
+<summary>kmax_sweep</summary>
+
+<table>
+<tr>
+<td><img width="400" src="figures/model_scaling/kmax_sweep/stdev_vs_theta.png" /></td>
+<td><img width="400" src="figures/model_scaling/kmax_sweep/fiducial_stdev.png" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/model_scaling/kmax_sweep/optuna_history.png" /></td>
+<td></td>
+</tr>
+</table>
+
+</details>
 
 <details>
 <summary>feature_sweep</summary>

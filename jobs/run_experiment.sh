@@ -10,7 +10,7 @@
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 # TYPE: "ood" or "self"
-TYPE=self
+TYPE=ood
 
 # Training suite
 TRAIN_NBODY=quijotelike

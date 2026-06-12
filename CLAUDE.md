@@ -47,8 +47,8 @@ clustering summary statistics using simulation-based inference (SBI / NPE).
 - Summary shorthand: zPk024 = zPk0+zPk2+zPk4; Bk0 = zBk0
 
 **What good looks like**:
-- Coverage (PIT) curves: diagonal = well-calibrated; below = overconfident;
-  above = underconfident
+- Coverage (PIT) curves: diagonal = well-calibrated; below = underpredicting;
+  above = overpredicting
 - Median coverage heatmaps: centered at 0.5 = unbiased; blue (>0.5) =
   over-predicting (posteriors too wide or biased high); red (<0.5) =
   under-predicting (posteriors too narrow or biased low)
@@ -158,3 +158,4 @@ Use the template at `templates/selfconsistent_update.md`.
   zoom-ins are unavailable
 - Describe observations only — do not infer causal mechanisms or draw
   conclusions about underlying physics beyond what the figures directly show
+- Be concise with your language. Avoid 'subtitles' of bullet points.

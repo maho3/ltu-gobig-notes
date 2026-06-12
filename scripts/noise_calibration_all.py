@@ -30,7 +30,8 @@ except OSError:
 WDIR = '/work/hdd/bdne/maho3/cmass-ili'
 _DEFAULT_BASEDIR = f'{WDIR}/quijotelike/fastpm_charm6/models/galaxy'
 _DEFAULT_TESTDIR = f'{WDIR}/quijote/nbody_hodz_gridnoise/models/galaxy'
-_DEFAULT_NOISES  = f'{WDIR}/noise_priors/noisegrid.csv'
+_DEFAULT_NOISES = f'{WDIR}/noise_priors/noisegrid.csv'
+
 
 def _parse_args():
     p = argparse.ArgumentParser()
@@ -39,6 +40,7 @@ def _parse_args():
     p.add_argument('--noises-path', default=_DEFAULT_NOISES)
     p.add_argument('--outdir', default='./figures')
     return p.parse_args()
+
 
 z = 'z'
 SUMMARY_NAMES = [
@@ -53,11 +55,12 @@ PARAM_IDXS = [0, 4]
 N_NOISE = 49
 
 _args = _parse_args()
-BASEDIR        = _args.basedir
-TESTDIR_BASE   = _args.testdir
+BASEDIR = _args.basedir
+TESTDIR_BASE = _args.testdir
 NOISE_GRID_PATH = _args.noises_path
-FIG_DIR        = _args.outdir
-SIM_TEST = '_'.join([p for p in TESTDIR_BASE.rstrip('/').split('/') if p][-4:-2])
+FIG_DIR = _args.outdir
+SIM_TEST = '_'.join(
+    [p for p in TESTDIR_BASE.rstrip('/').split('/') if p][-4:-2])
 
 os.makedirs(FIG_DIR, exist_ok=True)
 
@@ -183,7 +186,7 @@ for p_idx in PARAM_IDXS:
             fraction=0.02, pad=0.02)
     fig.suptitle(f'Median coverage — ${PARAM_NAMES[p_idx]}$', fontsize=14)
     fname = join(FIG_DIR, f'median_coverage_p{p_idx}.png')
-    fig.savefig(fname, dpi=150, bbox_inches='tight')
+    fig.savefig(fname, dpi=100, bbox_inches='tight')
     print(f'Saved {fname}')
 
 plt.show()

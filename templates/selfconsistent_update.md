@@ -11,20 +11,8 @@
 
 ## Overview
 - <high-level bullet: constraining power trend, calibration status>
-- <bullet>
-- ...
-
-## Findings
-
-### kmax sweep — <summary label>
-- <specific finding: where stdev plateaus, calibration breaks, etc.>
-- <bullet>
-
-### Feature sweep — kmax=<value>
-- <specific finding: which summaries help, diminishing returns, etc.>
-- <bullet>
-
-### <flagged sweep if zoom-in warranted>
+- <kmax sweep findings: where stdev plateaus, calibration breaks, etc.>
+- <feature sweep findings: which summaries help, diminishing returns, flagged sweeps, etc.>
 - ...
 
 ## Figures
