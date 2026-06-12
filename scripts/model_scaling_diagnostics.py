@@ -91,7 +91,7 @@ def simple(label):
 
 # ── Data helpers ───────────────────────────────────────────────────────────────
 
-def modeldir(nbody, sim, tracer, summary, kmax, wdir=WDIR):
+def modeldir(nbody, sim, tracer, summary, kmax, wdir=_DEFAULT_WDIR):
     return join(wdir, nbody, sim, 'models', tracer,
                 summary, f'kmin-0.0_kmax-{kmax:.1f}')
 

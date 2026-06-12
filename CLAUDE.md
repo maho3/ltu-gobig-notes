@@ -8,9 +8,9 @@ Each experiment lives under `experiments/<dir>/` and contains:
 
 **Directory naming convention**:
 - OOD: `YYYY-MM-DD_ood_<train-suite>-<train-sim>_<test-suite>-<test-sim>`
-  e.g. `2026-06-12_ood_quijotelike-charm6_quijote-nbody`
+  e.g. `2026-06-12_ood_quijotelike-fastpm_charm6_quijote-nbody_hodz_gridnoise`
 - Self-consistent: `YYYY-MM-DD_self_<suite>-<sim>`
-  e.g. `2026-06-12_self_quijotelike-charm6`
+  e.g. `2026-06-12_self_quijotelike-fastpm_charm6`
 
 **After writing `update.md`**: add a row to `experiments/README.md` with
 Date, Type, Train, Test, Notes, and a relative link to the update.
