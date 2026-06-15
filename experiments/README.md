@@ -2,5 +2,6 @@
 
 | Date | Type | Train | Test | Notes | Update |
 |------|------|-------|------|-------|--------|
+| 2026-06-12 | Misc | quijotelike/fastpm_charm6 | abacuslike/fastpm_charm6 | Volume sanity check: HMF, P(k), velocities, spatial distribution | [update](2026-06-12_sanity_quijotelike-fastpm_charm6_abacuslike-fastpm_charm6/update.md) |
 | 2026-06-15 | Self | quijotelike/fastpm_charm6 | — | kmax sweep (zPk024), feature sweep at kmax=0.4 | [update](2026-06-15_self_quijotelike-fastpm_charm6/update.md) |
 | 2026-06-15 | OOD | quijotelike/fastpm_charm6 | quijote/nbody_hodz_gridnoise | zPk024/zBk0/zEqBk0, kmax=0.2–0.4, noise grid | [update](2026-06-15_ood_quijotelike-fastpm_charm6_quijote-nbody_hodz_gridnoise/update.md) |
