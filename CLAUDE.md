@@ -67,7 +67,7 @@ suite (e.g. Quijote N-body, Abacus) across a noise grid of (σ_rad, σ_tran).
 4. **Pass 2** (sub-agents): for each flagged cell, spawn one Haiku sub-agent per the dispatch spec below
 5. Collect sub-agent bullets
 6. Write `update.md` using template at `templates/ood_update.md` (see Template instructions below)
-7. Add a row to `experiments/README.md` with: Date, Type, Train, Test, Notes, relative link to update
+7. Add a row to `experiments/README.md` with: Date, Type, Train, Test, Notes, relative link to update — insert in ascending date order
 
 ---
 
@@ -151,7 +151,7 @@ Use `templates/ood_update.md`. Populate fields as follows:
 4. **Pass 2** (sub-agents): for each flagged sweep, spawn one Haiku sub-agent per the dispatch spec below
 5. Collect sub-agent bullets
 6. Write `update.md` using template at `templates/selfconsistent_update.md` (see Template instructions below)
-7. Add a row to `experiments/README.md` with: Date, Type, Train, Test, Notes, relative link to update
+7. Add a row to `experiments/README.md` with: Date, Type, Train, Test, Notes, relative link to update — insert in ascending date order
 
 ---
 
@@ -218,8 +218,61 @@ Use `templates/selfconsistent_update.md`. Populate fields as follows:
 ---
 
 ---
+
+### 3. Abacus OOD inference
+
+**Setup**: NPE trained on one suite (e.g. CHARM-based), tested on the Abacus
+simulation suite. Abacus differs from standard OOD (Quijote) in two important
+ways:
+
+1. **Non-uniform prior**: Abacus cosmologies are not drawn from a consistent
+   Latin-hypercube prior, so coverage/calibration statistics are not meaningful.
+   Coverage and heatmap plots are omitted entirely.
+2. **Mixed cosmology types**: Not all Abacus simulations are ΛCDM with Mnu = 0.
+   Test points are classified into three groups and color-coded in all figures:
+   - **LCDM Mnu=0** (blue circles) — standard ΛCDM, massless neutrinos
+   - **LCDM Mnu>0** (orange triangles) — ΛCDM with massive neutrinos
+   - **non-LCDM** (green squares) — beyond-ΛCDM cosmologies (e.g. wCDM)
+
+   Cosmology type is determined from `abacus_custom_table.csv` via `ids_test.npy`.
+
+**Script**: `scripts/ood_abacus_inference.py`
+**Job**: `jobs/run_abacus_experiment.sh`
+
+**Expected figures** (check `figures/` for what is actually present):
+- Per-(summary, kmax) folder, same naming convention as OOD
+- `pred_Om.jpg`, `pred_s8.jpg` — grid of true-vs-pred across all noise configs, points colored by cosmology type
+- `scatter_n{N}.jpg` — true-vs-pred at a representative noise index, with self-consistent comparison in grey
+- `residuals_n{N}.jpg` — residual plots at a representative noise index
+
+---
+
+#### Abacus OOD — execution order
+
+1. Read `config.md` → populate header fields (Train, Test, Summaries, kmax, Notes)
+2. Scan `figures/` → enumerate per-(summary, kmax) subdirectory paths
+3. **Single pass** (main agent): read all available figures in each subdirectory; no flagging or Pass 2 sub-agents needed
+4. Write `update.md` using the OOD template at `templates/ood_update.md` with the following adaptations:
+   - Omit any mention of coverage or calibration (no such figures exist)
+   - Note which cosmology classes (Mnu>0, non-LCDM) show visible bias relative to LCDM Mnu=0 points
+   - Include `pred_Om.jpg` / `pred_s8.jpg` as the primary diagnostic figures
+5. Add a row to `experiments/README.md`
+
+---
+
+#### Interpreting Abacus OOD figures
+
+- **True-vs-pred grids**: points colored by cosmology class. Look for systematic offsets between classes at the same true parameter value.
+- **Mnu>0 bias**: massive-neutrino cosmologies often share the same Ωm as ΛCDM phases but differ in σ8 (via σ8_cb vs σ8_m); offsets in predicted σ8 for orange triangles relative to blue circles are expected and worth noting.
+- **non-LCDM bias**: green squares span a wider range of cosmologies; large scatter or systematic offset indicates the NPE does not generalise to non-ΛCDM models.
+- **Self vs OOD**: grey points in scatter/residual plots show self-consistent performance on the training suite. The spread of OOD points around the diagonal relative to the grey points quantifies the OOD penalty.
+- A small x-jitter is applied to all points so stacked cosmologies (many Abacus phases share the same true Ωm) remain individually visible.
+
+---
+
+---
  
-### 3. Miscellaneous
+### 4. Miscellaneous
  
 **Setup**: A free-form experiment where the user has already written a draft `update.md` brain-dump and placed figures in `figures/`. Your job is to formalize and polish the draft, linking figures to findings. There are no fixed figure names or analysis passes — work from what is present.
  
