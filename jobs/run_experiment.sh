@@ -14,7 +14,7 @@ TYPE=self
 
 # Training suite
 TRAIN_NBODY=quijotelike
-TRAIN_SIM=fastpm_charm6
+TRAIN_SIM=fastpm_charm6_rebin
 TRACER=galaxy
 
 # Test suite (OOD only; ignored for TYPE=self)
@@ -59,7 +59,7 @@ cat > "$EXPDIR/config.md" <<EOF
 **Tracer**: $TRACER
 **Test Noise**: noisegrid.csv
 **Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4
+**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
 **Notes**: $NOTES
 EOF
 else
@@ -68,9 +68,9 @@ cat > "$EXPDIR/config.md" <<EOF
 **Suite**: $TRAIN_NBODY/$TRAIN_SIM
 **Tracer**: $TRACER
 **kmax sweep summary**: zPk0+zPk2+zPk4
-**kmax values**: 0.1, 0.2, 0.3, 0.4
+**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6
 **Feature sweep kmax**: 0.4
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
 **Notes**: $NOTES
 EOF
 fi

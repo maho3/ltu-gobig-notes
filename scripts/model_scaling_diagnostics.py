@@ -43,15 +43,16 @@ def _parse_args():
 
 # kmax sweep: fix one summary, vary kmax
 KMAX_SUMMARY = f'{Z}Pk0+{Z}Pk2+{Z}Pk4'
-KMAX_VALUES = [0.1, 0.2, 0.3, 0.4]
+KMAX_VALUES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
 # feature sweep: fix kmax, vary summary complexity
 FEAT_KMAX = 0.4
 FEAT_SUMMARIES = [
     f'{Z}Pk0',
     f'{Z}Pk0+{Z}Pk2+{Z}Pk4',
-    f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}Bk0',
     f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}EqBk0',
+    f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}SqBk0',
+    f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}Bk0',
 ]
 
 # Fiducial cosmology for filtering test points

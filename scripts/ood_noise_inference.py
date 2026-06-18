@@ -26,14 +26,17 @@ _DEFAULT_NOISES_PATH = f'{_WDIR}/noise_priors/noisegrid.csv'
 
 SUMMARIES = [
     'zPk0+zPk2+zPk4',
-    'zPk0+zPk2+zPk4+zBk0',
     'zPk0+zPk2+zPk4+zEqBk0',
+    'zPk0+zPk2+zPk4+zSqBk0',
+    'zPk0+zPk2+zPk4+zBk0',
 ]
 
 KMINMAX_PAIRS = [
     (0.0, 0.2),
     (0.0, 0.3),
     (0.0, 0.4),
+    (0.0, 0.5),
+    (0.0, 0.6),
 ]
 
 
