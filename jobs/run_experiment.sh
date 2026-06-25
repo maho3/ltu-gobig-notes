@@ -10,16 +10,16 @@
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 # TYPE: "ood" or "self"
-TYPE=self
+TYPE=ood
 
 # Training suite
 TRAIN_NBODY=quijotelike
-TRAIN_SIM=fastpm_charm6_rebin
+TRAIN_SIM=fastpm_charm6_comp
 TRACER=galaxy
 
 # Test suite (OOD only; ignored for TYPE=self)
 TEST_NBODY=quijote
-TEST_SIM=nbody_hodz_gridnoise
+TEST_SIM=nbody_comp_gridnoise
 
 # Working directory containing all suite data
 WDIR=/work/hdd/bdne/maho3/cmass-ili

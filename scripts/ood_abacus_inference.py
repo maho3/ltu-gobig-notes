@@ -340,6 +340,138 @@ def plot_residuals(theta, percs, theta_self, percs_self, masks,
     print(f'  Saved {fname}')
 
 
+def _compute_lcdm_z(theta, percs, noiseidx, n_noise, masks):
+    """Mean joint z-score for LCDM Mnu=0 cosmologies per noise bin.
+
+    z_i = sqrt( sum_p ((theta_true - pred_median)^2 / sigma_p^2) )
+    where sigma_p = (lower_hw + upper_hw) / 2 for each parameter p.
+    Returns array of shape (n_noise,), NaN where no LCDM Mnu=0 points exist.
+    """
+    sigma = (percs[1] + percs[2]) / 2   # (n_test, n_params), avg posterior half-width
+    simple_mask = masks['simple']
+    z_per_noise = np.full(n_noise, np.nan)
+    for i in range(n_noise):
+        sel = np.where(noiseidx == i)[0]
+        sel_s = sel[simple_mask[sel]]
+        if len(sel_s) == 0:
+            continue
+        diffs = theta[sel_s][:, PARAM_INDICES] - percs[0][sel_s][:, PARAM_INDICES]
+        sigs  = sigma[sel_s][:, PARAM_INDICES]
+        z = np.sqrt(np.sum((diffs / sigs) ** 2, axis=1))
+        z_per_noise[i] = np.mean(z)
+    return z_per_noise
+
+
+def _noise_pivot(noises, values):
+    """Reshape flat (n_noise,) values into a 2D grid keyed by (σ_rad, σ_tran).
+
+    Returns (grid, rad_vals, tran_vals) where grid[i, j] corresponds to
+    rad_vals[i] and tran_vals[j].
+    """
+    rad_vals  = np.unique(noises[:, 0])
+    tran_vals = np.unique(noises[:, 1])
+    grid = np.full((len(rad_vals), len(tran_vals)), np.nan)
+    for k, (r, t) in enumerate(noises):
+        i = np.searchsorted(rad_vals,  r)
+        j = np.searchsorted(tran_vals, t)
+        grid[i, j] = values[k]
+    return grid, rad_vals, tran_vals
+
+
+def _draw_z_heatmap(ax, grid, rad_vals, tran_vals, vmax=4.0):
+    """Draw a z-score noise-grid heatmap onto ax. Returns the image artist."""
+    im = ax.imshow(grid, aspect='auto', origin='lower',
+                   vmin=0, vmax=vmax, cmap='RdYlGn_r',
+                   extent=[-0.5, len(tran_vals) - 0.5,
+                            -0.5, len(rad_vals)  - 0.5])
+    # mark the 2-sigma boundary
+    if not np.all(np.isnan(grid)):
+        try:
+            ax.contour(grid, levels=[2.0], colors='k', linewidths=1.2)
+        except Exception:
+            pass
+    return im
+
+
+def plot_lcdm_z_heatmap(z_per_noise, noises, s, kstr, figdir):
+    """Per-noise-config heatmap of mean LCDM Mnu=0 joint z-score."""
+    grid, rad_vals, tran_vals = _noise_pivot(noises, z_per_noise)
+
+    fig, ax = plt.subplots(figsize=(max(4, len(tran_vals) * 0.6 + 1.5),
+                                    max(3, len(rad_vals)  * 0.6 + 1.5)))
+    im = _draw_z_heatmap(ax, grid, rad_vals, tran_vals)
+
+    ax.set_xticks(range(len(tran_vals)))
+    ax.set_xticklabels([f'{v:.2f}' for v in tran_vals], rotation=45, ha='right')
+    ax.set_yticks(range(len(rad_vals)))
+    ax.set_yticklabels([f'{v:.2f}' for v in rad_vals])
+    ax.set_xlabel(r'$\sigma_{\rm tran}$')
+    ax.set_ylabel(r'$\sigma_{\rm rad}$')
+    ax.set_title(f'Mean joint $z$ (LCDM $M_\\nu=0$)\n{s}  {kstr}')
+
+    plt.colorbar(im, ax=ax, label=r'$\bar{z}$')
+    plt.tight_layout()
+    fname = join(figdir, 'lcdm_z_heatmap.png')
+    fig.savefig(fname, dpi=100, bbox_inches='tight')
+    plt.close(fig)
+    print(f'  Saved {fname}')
+
+
+def plot_global_z_heatmap(results, summaries, kminmax_pairs, noises, figroot):
+    """Global multi-panel z-score heatmap: rows=summaries, cols=kmax.
+
+    Each cell is the noise-grid heatmap of mean LCDM Mnu=0 z-score.
+    A black contour marks z=2.
+    """
+    _, rad_vals, tran_vals = _noise_pivot(noises, np.zeros(len(noises)))
+    present_summ = [s for s in summaries
+                    if any((s, km, kx) in results for km, kx in kminmax_pairs)]
+    present_kmax = [p for p in kminmax_pairs
+                    if any((s, p[0], p[1]) in results for s in summaries)]
+    if not present_summ or not present_kmax:
+        return
+
+    n_s = len(present_summ)
+    n_k = len(present_kmax)
+
+    fig, axs = plt.subplots(n_s, n_k,
+                             figsize=(max(2.0, len(tran_vals) * 0.45 + 0.5) * n_k,
+                                      max(1.5, len(rad_vals)  * 0.45 + 0.5) * n_s),
+                             squeeze=False)
+
+    vmax = 4.0
+    for i, s in enumerate(present_summ):
+        for j, (kmin, kmax) in enumerate(present_kmax):
+            ax = axs[i, j]
+            key = (s, kmin, kmax)
+            if key not in results:
+                ax.axis('off')
+                continue
+            grid, _, _ = _noise_pivot(noises, results[key])
+            _draw_z_heatmap(ax, grid, rad_vals, tran_vals, vmax=vmax)
+            if i == 0:
+                ax.set_title(f'kmax={kmax:.1f}', fontsize=9)
+            if j == 0:
+                short = s.replace('zPk0+zPk2+zPk4', 'zPk024')
+                ax.set_ylabel(short, fontsize=8)
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+    fig.suptitle(
+        r'Mean joint $z$ (LCDM $M_\nu=0$)  |  black contour = $z=2$',
+        fontsize=12, y=1.01)
+    sm = plt.cm.ScalarMappable(
+        cmap='RdYlGn_r', norm=plt.Normalize(0, vmax))
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=axs, location='right', shrink=0.8, pad=0.02)
+    cbar.set_label(r'$\bar{z}$')
+
+    fname = join(figroot, 'lcdm_z_global.png')
+    fig.savefig(fname, dpi=100, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Saved global z-heatmap: {fname}')
+
+
 def run(basedir, testdir, noises_path, cosm_table_path, summaries, kminmax_pairs, figroot=None):
     np.random.seed(42)
     if figroot is None:
@@ -348,6 +480,8 @@ def run(basedir, testdir, noises_path, cosm_table_path, summaries, kminmax_pairs
 
     noises  = np.loadtxt(noises_path, delimiter=',')
     n_noise = len(noises)
+
+    z_results = {}  # (summary, kmin, kmax) -> z_per_noise array
 
     for s in summaries:
         for kmin, kmax in kminmax_pairs:
@@ -381,6 +515,12 @@ def run(basedir, testdir, noises_path, cosm_table_path, summaries, kminmax_pairs
             for p in PARAM_INDICES:
                 plot_all_noise_true_vs_pred(
                     theta, percs, noiseidx, noises, masks, p, s, figdir)
+
+            z_scores = _compute_lcdm_z(theta, percs, noiseidx, n_noise, masks)
+            z_results[(s, kmin, kmax)] = z_scores
+            plot_lcdm_z_heatmap(z_scores, noises, s, kstr, figdir)
+
+    plot_global_z_heatmap(z_results, summaries, kminmax_pairs, noises, figroot)
 
 
 if __name__ == '__main__':

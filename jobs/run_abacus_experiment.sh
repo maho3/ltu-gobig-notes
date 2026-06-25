@@ -12,11 +12,11 @@
 
 # Training suite
 TRAIN_NBODY=quijotelike
-TRAIN_SIM=fastpm_charm6
+TRAIN_SIM=fastpm_charm6_comp
 TRACER=galaxy
 
 # Abacus test suite
-TEST_NBODY=abacus1gpch
+TEST_NBODY=abacus
 TEST_SIM=custom_hodz_gridnoise
 
 # Working directory containing all suite data

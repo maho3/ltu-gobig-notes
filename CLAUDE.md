@@ -244,6 +244,8 @@ ways:
 - `pred_Om.jpg`, `pred_s8.jpg` — grid of true-vs-pred across all noise configs, points colored by cosmology type
 - `scatter_n{N}.jpg` — true-vs-pred at a representative noise index, with self-consistent comparison in grey
 - `residuals_n{N}.jpg` — residual plots at a representative noise index
+- `lcdm_z_heatmap.png` — noise-grid heatmap of mean joint z-score for LCDM Mnu=0 cosmologies; z = sqrt((ΔΩm/σΩm)² + (Δσ8/σσ8)²) averaged over LCDM Mnu=0 test points per noise bin; black contour marks z=2; green=well-recovered, red=biased
+- Top-level `lcdm_z_global.png` — global multi-panel summary: rows=summaries, cols=kmax, each cell is the noise-grid z-heatmap; shows at a glance which (summary, kmax) cells recover LCDM Mnu=0 cosmologies within 2σ
 
 ---
 
