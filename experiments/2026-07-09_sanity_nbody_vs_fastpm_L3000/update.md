@@ -2,17 +2,17 @@
 
 **Date**: 2026-07-09
 **Type**: Miscellaneous / sanity
-**Suite**: N-body (reference) vs. fastpm_charm6, L=3 Gpc/h, lhid 2000, a=0.666667
+**Suite**: quijote N-body L=3 Gpc/h (reference) vs. fastpm_charm6 L=3 Gpc/h vs. quijote N-body L=1 Gpc/h, lhid 2000, a=0.666667
 
 ---
 
 ## Overview
 
-- Total halo number density is lower in fastpm_charm6 than in the N-body reference (N_slab = 328,657 vs. 344,210 in the full-box projection). The HMF ratio sits at ~0.85–1.0 across the bulk of the mass range, with a dip to ~0.6 around M ~ 1.5×10^15 Msun/h before spiking above 1 at the highest masses.
+- Total halo number density is lower in fastpm_charm6 than in the quijote L=3 Gpc/h N-body reference (N_slab = 328,657 vs. 344,210 in the full-box projection). The HMF ratio sits at ~0.85–1.0 across the bulk of the mass range, with a dip to ~0.6 around M ~ 1.5×10^15 Msun/h before spiking above 1 at the highest masses. The quijote L=1 Gpc/h N-body ratio (relative to the L=3 Gpc/h reference) tracks this same deficit closely from ~10^13 up to ~1.5×10^15 Msun/h, indicating the discrepancy seen in charm6 L3000 is also present in quijote nbody L1000 over this range. Above ~1.5×10^15 Msun/h the L1000 ratio drops to zero as the smaller box runs out of halos at the highest masses, unlike charm6 L3000 which continues to the same mass range as the reference.
 
 ![Halo mass function](figures/halo_mass_function.jpg)
 
-- The cumulative number density confirms fastpm_charm6 falls below the N-body reference across most mass thresholds, with the fastpm/nbody ratio dipping to ~0.6–0.7 near M ~ 1.5×10^15 Msun/h and then rising sharply above 1 at the highest-mass end where counts are low.
+- The cumulative number density shows the same pattern: fastpm_charm6 falls below the quijote L=3 Gpc/h N-body reference across most mass thresholds, with the ratio dipping to ~0.6–0.7 near M ~ 1.5×10^15 Msun/h before rising sharply above 1 at the highest-mass end where counts are low. The quijote L=1 Gpc/h N-body ratio follows the same deficit trend as charm6 L3000 up to ~1.5×10^15 Msun/h, then drops to zero at higher masses due to the limited volume of the L1000 box.
 
 ![Cumulative number density](figures/cumulative_number_density.jpg)
 
