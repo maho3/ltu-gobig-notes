@@ -10,10 +10,10 @@
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 # TYPE: "ood" or "self"
-TYPE=ood
+TYPE=self
 
 # Training suite
-TRAIN_NBODY=quijotelike
+TRAIN_NBODY=abacuslike
 TRAIN_SIM=fastpm_charm6_comp
 TRACER=galaxy
 

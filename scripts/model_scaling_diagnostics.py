@@ -38,6 +38,14 @@ def _parse_args():
     p.add_argument('--tracer', default=_DEFAULT_TRACER)
     p.add_argument('--outdir', default=None,
                    help='Root output dir; figures saved to <outdir>/kmax_sweep/ and <outdir>/feature_sweep/')
+    p.add_argument('--sim2', default=None,
+                   help='If set, run multi-sim comparison mode: --sim vs --sim2 '
+                        '(same nbody/tracer), overlaying kmax/feature scaling. '
+                        'Also runs the normal single-sim diagnostics for each.')
+    p.add_argument('--label1', default=None,
+                   help='Legend label for --sim (multisim mode). Defaults to --sim value.')
+    p.add_argument('--label2', default=None,
+                   help='Legend label for --sim2 (multisim mode). Defaults to --sim2 value.')
     return p.parse_args()
 
 
@@ -387,6 +395,149 @@ def plot_feature_length_scaling(summaries, kmax, nbody, sim, tracer,
     print(f'  Saved {fpath}')
 
 
+def plot_kmax_scaling_multisim(summaries, kmax_values, sim_configs, tracer,
+                               title, figdir, fname='kmax_scaling_multisim.jpg'):
+    """Fiducial stdev vs kmax, overlaying multiple sims. Color = summary, linestyle = sim."""
+    markers = ['o', 's', '*', 'D', '^', 'v']
+    linestyles = ['-', '--', ':', '-.']
+    kmax_arr = np.array(kmax_values)
+    kspan = kmax_arr.max() - kmax_arr.min()
+
+    f, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
+    for g, s in enumerate(summaries):
+        for si, cfg in enumerate(sim_configs):
+            off = (g - (len(summaries) - 1) / 2) * 0.01 * kspan
+            xs, percs_list = [], [[], []]
+            for k in kmax_values:
+                mdir = modeldir(cfg['nbody'], cfg['sim'], tracer, s, k, cfg['wdir'])
+                stdev = fiducial_stdev(mdir)
+                if stdev is None:
+                    print(f'  SKIP kmax_scaling_multisim (no data): {mdir}')
+                    continue
+                xs.append(k + off)
+                for j, p in enumerate(PARAM_IDXS):
+                    percs_list[j].append(
+                        np.percentile(stdev[:, p], [50, 16, 84]))
+            if not xs:
+                continue
+            for j, p in enumerate(PARAM_IDXS):
+                perc = np.array(percs_list[j])
+                axs[j].errorbar(
+                    xs, perc[:, 0],
+                    yerr=[perc[:, 0] - perc[:, 1], perc[:, 2] - perc[:, 0]],
+                    label=f"{simple(s)} ({cfg['label']})", color=f'C{g}',
+                    marker=markers[g % len(markers)],
+                    linestyle=linestyles[si % len(linestyles)], capsize=3)
+                axs[j].set(xlabel=r'$k_{\max}\ [h/\mathrm{Mpc}]$',
+                           ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
+                           ylim=(0, None))
+                axs[j].grid(True)
+
+    axs[1].legend(fontsize=8, loc='upper right', ncol=1)
+    f.suptitle(title)
+    plt.tight_layout()
+    fpath = join(figdir, fname)
+    f.savefig(fpath, dpi=100, bbox_inches='tight')
+    plt.close(f)
+    print(f'  Saved {fpath}')
+
+
+def plot_feature_length_scaling_multisim(summaries, kmax, sim_configs, tracer,
+                                          title, figdir,
+                                          fname='feature_length_scaling_multisim.jpg'):
+    """Fiducial stdev vs feature vector length, overlaying multiple sims at fixed kmax."""
+    markers = ['o', 's', '*', 'D', '^', 'v']
+
+    f, axs = plt.subplots(1, 2, figsize=(10, 5))
+
+    # First pass: gather data for all sims so offsets can be computed consistently.
+    per_sim = []
+    all_xlens = []
+    for cfg in sim_configs:
+        xlens, stdevs, labels_valid = [], [], []
+        for s in summaries:
+            mdir = modeldir(cfg['nbody'], cfg['sim'], tracer, s, kmax, cfg['wdir'])
+            if not exists(join(mdir, 'x_test.npy')):
+                print(f'  SKIP feature_scaling_multisim (no x_test): {mdir}')
+                continue
+            stdev = fiducial_stdev(mdir)
+            if stdev is None:
+                print(f'  SKIP feature_scaling_multisim (no stdev): {mdir}')
+                continue
+            xlens.append(feature_length(mdir))
+            stdevs.append(stdev)
+            labels_valid.append(s)
+        per_sim.append((xlens, stdevs, labels_valid))
+        all_xlens.extend(xlens)
+
+    xspan = (max(all_xlens) - min(all_xlens)) if len(set(all_xlens)) > 1 else 1
+
+    for si, (cfg, (xlens, stdevs, labels_valid)) in enumerate(zip(sim_configs, per_sim)):
+        off = (si - (len(sim_configs) - 1) / 2) * 0.08 * xspan
+        for j, p in enumerate(PARAM_IDXS):
+            ax = axs[j]
+            for i, (xl, stdev, lab) in enumerate(zip(xlens, stdevs, labels_valid)):
+                perc = np.percentile(stdev[:, p], [50, 16, 84])
+                ax.errorbar(xl + off, perc[0],
+                            yerr=[[perc[0] - perc[1]], [perc[2] - perc[0]]],
+                            fmt=markers[i % len(markers)], color=f'C{i}',
+                            markerfacecolor=('none' if si else f'C{i}'),
+                            label=f"{simple(lab)} ({cfg['label']})", capsize=4)
+            ax.set(xlabel='Feature vector length',
+                   ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
+                   ylim=(0, None))
+            ax.grid(True)
+
+    axs[1].legend(fontsize=7, loc='upper right', ncol=1)
+    f.suptitle(title)
+    plt.tight_layout()
+    fpath = join(figdir, fname)
+    f.savefig(fpath, dpi=100, bbox_inches='tight')
+    plt.close(f)
+    print(f'  Saved {fpath}')
+
+
+# ── Multi-sim comparison ────────────────────────────────────────────────────────
+
+def run_multisim(sim_configs, tracer,
+                 kmax_summary, kmax_values,
+                 feat_kmax, feat_summaries,
+                 figroot=None, run_individual=True):
+    """Compare constraining power across multiple (nbody, sim) model dirs
+    (e.g. same sim with/without HOD posterior inference) as a function of
+    summary and kmax.
+
+    sim_configs: list of dicts with keys 'wdir', 'nbody', 'sim', 'label'.
+    """
+    if figroot is None:
+        figroot = join(os.path.dirname(os.path.abspath(__file__)),
+                       'figures', 'model_scaling')
+    os.makedirs(figroot, exist_ok=True)
+
+    if run_individual:
+        for cfg in sim_configs:
+            print(f"\n### Individual diagnostics: {cfg['label']} "
+                  f"({cfg['nbody']}/{cfg['sim']}) ###")
+            run(wdir=cfg['wdir'], nbody=cfg['nbody'], sim=cfg['sim'],
+                tracer=tracer, kmax_summary=kmax_summary,
+                kmax_values=kmax_values, feat_kmax=feat_kmax,
+                feat_summaries=feat_summaries,
+                figroot=join(figroot, cfg['label']))
+
+    print('\n=== multi-sim comparison ===')
+    comp_dir = join(figroot, 'comparison')
+    os.makedirs(comp_dir, exist_ok=True)
+
+    labels_str = ' vs '.join(cfg['label'] for cfg in sim_configs)
+    kmax_title = f'{labels_str}\n{simple(kmax_summary)}: varying kmax'
+    plot_kmax_scaling_multisim(feat_summaries, kmax_values, sim_configs, tracer,
+                               kmax_title, comp_dir)
+
+    feat_title = f'{labels_str}\nkmax={feat_kmax}: varying summary'
+    plot_feature_length_scaling_multisim(feat_summaries, feat_kmax, sim_configs,
+                                         tracer, feat_title, comp_dir)
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def run(wdir, nbody, sim, tracer,
@@ -440,14 +591,31 @@ def run(wdir, nbody, sim, tracer,
 
 if __name__ == '__main__':
     _args = _parse_args()
-    run(
-        wdir=_args.wdir,
-        nbody=_args.nbody,
-        sim=_args.sim,
-        tracer=_args.tracer,
-        kmax_summary=KMAX_SUMMARY,
-        kmax_values=KMAX_VALUES,
-        feat_kmax=FEAT_KMAX,
-        feat_summaries=FEAT_SUMMARIES,
-        figroot=_args.outdir,
-    )
+    if _args.sim2 is not None:
+        _sim_configs = [
+            {'wdir': _args.wdir, 'nbody': _args.nbody, 'sim': _args.sim,
+             'label': _args.label1 or _args.sim},
+            {'wdir': _args.wdir, 'nbody': _args.nbody, 'sim': _args.sim2,
+             'label': _args.label2 or _args.sim2},
+        ]
+        run_multisim(
+            sim_configs=_sim_configs,
+            tracer=_args.tracer,
+            kmax_summary=KMAX_SUMMARY,
+            kmax_values=KMAX_VALUES,
+            feat_kmax=FEAT_KMAX,
+            feat_summaries=FEAT_SUMMARIES,
+            figroot=_args.outdir,
+        )
+    else:
+        run(
+            wdir=_args.wdir,
+            nbody=_args.nbody,
+            sim=_args.sim,
+            tracer=_args.tracer,
+            kmax_summary=KMAX_SUMMARY,
+            kmax_values=KMAX_VALUES,
+            feat_kmax=FEAT_KMAX,
+            feat_summaries=FEAT_SUMMARIES,
+            figroot=_args.outdir,
+        )
