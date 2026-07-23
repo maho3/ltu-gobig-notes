@@ -18,8 +18,8 @@ TRACER=galaxy
 SIM1=fastpm_charm6_comp
 LABEL1="just cosmo"
 
-SIM2=fastpm_charm6_inferhod
-LABEL2="cosmo+HOD"
+SIM2=fastpm_charm6_momenthod
+LABEL2="moment+cosmo+HOD"
 
 # Working directory containing all suite data
 WDIR=/work/hdd/bdne/maho3/cmass-ili
