@@ -62,6 +62,11 @@ matplotlib.rcParams.update({
 PARAM_NAMES = [r'\Omega_m', r'\Omega_b', r'h', r'n_s', r'\sigma_8']
 PARAM_INDICES = [0, 4]  # Omega_m and sigma_8
 
+# Mahalanobis metric used for the LCDM z-heatmaps (rendered on the figures).
+_Z_EQUATION = (r'$z=\sqrt{\mathbf{d}^{\mathsf{T}}\,\mathbf{C}^{-1}\,\mathbf{d}}$,  '
+               r'$\mathbf{d}=\theta_{\rm true}-\hat{\theta}$,  '
+               r'$\mathbf{C}=\mathrm{Cov}(\Omega_m,\sigma_8)$')
+
 # Cosmology class styles: (color, marker, label)
 # Plot order: non-LCDM, Mnu>0, simple — so the rarest classes land on top
 COSM_STYLES = [
@@ -328,14 +333,16 @@ def plot_residuals(theta, percs, theta_self, percs_self, masks,
     print(f'  Saved {fname}')
 
 
-def _compute_lcdm_z(theta, percs, noiseidx, n_noise, masks):
-    """Mean joint z-score for LCDM Mnu=0 cosmologies per noise bin.
+def _compute_lcdm_z(theta, percs, samples, noiseidx, n_noise, masks):
+    """Mean joint Mahalanobis distance for LCDM Mnu=0 cosmologies per noise bin.
 
-    z_i = sqrt( sum_p ((theta_true - pred_median)^2 / sigma_p^2) )
-    where sigma_p = (lower_hw + upper_hw) / 2 for each parameter p.
-    Returns array of shape (n_noise,), NaN where no LCDM Mnu=0 points exist.
+    For each test point, z = sqrt( d^T C^-1 d ), where d = theta_true - median
+    over (Omega_m, sigma_8) and C is the 2x2 posterior covariance of those two
+    parameters estimated from the samples. This uses the full covariance,
+    including the Omega_m-sigma_8 correlation, rather than assuming a diagonal
+    (per-parameter) covariance. Returns array of shape (n_noise,), NaN where no
+    LCDM Mnu=0 points exist.
     """
-    sigma = (percs[1] + percs[2]) / 2   # (n_test, n_params), avg posterior half-width
     simple_mask = masks['simple']
     z_per_noise = np.full(n_noise, np.nan)
     for i in range(n_noise):
@@ -343,10 +350,17 @@ def _compute_lcdm_z(theta, percs, noiseidx, n_noise, masks):
         sel_s = sel[simple_mask[sel]]
         if len(sel_s) == 0:
             continue
-        diffs = theta[sel_s][:, PARAM_INDICES] - percs[0][sel_s][:, PARAM_INDICES]
-        sigs  = sigma[sel_s][:, PARAM_INDICES]
-        z = np.sqrt(np.sum((diffs / sigs) ** 2, axis=1))
-        z_per_noise[i] = np.mean(z)
+        zvals = []
+        for pt in sel_s:
+            d = theta[pt, PARAM_INDICES] - percs[0][pt, PARAM_INDICES]
+            # samples: (n_draws, n_test, n_params) -> (n_draws, 2) for this point
+            cov = np.cov(samples[:, pt][:, PARAM_INDICES], rowvar=False)
+            try:
+                cinv = np.linalg.inv(cov)
+            except np.linalg.LinAlgError:
+                cinv = np.linalg.pinv(cov)
+            zvals.append(np.sqrt(d @ cinv @ d))
+        z_per_noise[i] = np.mean(zvals)
     return z_per_noise
 
 
@@ -395,7 +409,8 @@ def plot_lcdm_z_heatmap(z_per_noise, noises, s, kstr, figdir):
     ax.set_yticklabels([f'{v:.2f}' for v in rad_vals])
     ax.set_xlabel(r'$\sigma_{\rm tran}$')
     ax.set_ylabel(r'$\sigma_{\rm rad}$')
-    ax.set_title(f'Mean joint $z$ (LCDM $M_\\nu=0$)\n{s}  {kstr}')
+    ax.set_title(f'Mahalanobis $\\bar{{z}}$ (LCDM $M_\\nu=0$)\n{s}  {kstr}\n'
+                 f'{_Z_EQUATION}', fontsize=9)
 
     plt.colorbar(im, ax=ax, label=r'$\bar{z}$')
     plt.tight_layout()
@@ -450,8 +465,9 @@ def plot_global_z_heatmap(results, kcuts_by_summary, noises, figroot):
             ax.set_yticks([])
 
     fig.suptitle(
-        r'Mean joint $z$ (LCDM $M_\nu=0$)  |  black contour = $z=2$',
-        fontsize=12, y=1.01)
+        r'Mahalanobis $\bar{z}$ (LCDM $M_\nu=0$)  |  black contour = $\bar{z}=2$'
+        '\n' + _Z_EQUATION,
+        fontsize=12, y=1.03)
     sm = plt.cm.ScalarMappable(
         cmap='RdYlGn_r', norm=plt.Normalize(0, vmax))
     sm.set_array([])
@@ -513,7 +529,8 @@ def run(basedir, testdir, noises_path, cosm_table_path, figroot=None):
                 plot_all_noise_true_vs_pred(
                     theta, percs, noiseidx, noises, masks, p, stitle, figdir)
 
-            z_scores = _compute_lcdm_z(theta, percs, noiseidx, n_noise, masks)
+            z_scores = _compute_lcdm_z(
+                theta, percs, samples, noiseidx, n_noise, masks)
             z_results[(s, kstr)] = z_scores
             plot_lcdm_z_heatmap(z_scores, noises, stitle, kstr, figdir)
 
