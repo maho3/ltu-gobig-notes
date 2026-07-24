@@ -20,8 +20,12 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import os
+import sys
 import pandas as pd
-from os.path import join
+from os.path import join, dirname, abspath
+
+sys.path.insert(0, dirname(abspath(__file__)))
+from kcut_utils import discover_summaries, discover_kcuts, kcut_label  # noqa: E402
 
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
@@ -30,22 +34,6 @@ _DEFAULT_BASEDIR = f'{_WDIR}/quijotelike/fastpm_charm6/models/galaxy'
 _DEFAULT_TESTDIR = f'{_WDIR}/abacus1gpch/custom_hodz_gridnoise/models/galaxy'
 _DEFAULT_NOISES_PATH = f'{_WDIR}/noise_priors/noisegrid.csv'
 _DEFAULT_COSM_TABLE = f'{_WDIR}/scratch/abacus_custom_table.csv'
-
-SUMMARIES = [
-    'zPk0',
-    'zPk0+zPk2+zPk4',
-    'zPk0+zPk2+zPk4+zEqBk0',
-    'zPk0+zPk2+zPk4+zSqBk0',
-    'zPk0+zPk2+zPk4+zBk0',
-]
-
-KMINMAX_PAIRS = [
-    (0.0, 0.2),
-    (0.0, 0.3),
-    (0.0, 0.4),
-    (0.0, 0.5),
-    (0.0, 0.6),
-]
 
 
 def _parse_args():
@@ -417,42 +405,46 @@ def plot_lcdm_z_heatmap(z_per_noise, noises, s, kstr, figdir):
     print(f'  Saved {fname}')
 
 
-def plot_global_z_heatmap(results, summaries, kminmax_pairs, noises, figroot):
-    """Global multi-panel z-score heatmap: rows=summaries, cols=kmax.
+def plot_global_z_heatmap(results, kcuts_by_summary, noises, figroot):
+    """Global multi-panel z-score heatmap: rows=summaries, cols=k-cuts.
 
-    Each cell is the noise-grid heatmap of mean LCDM Mnu=0 z-score.
-    A black contour marks z=2.
+    Each row keeps its own k-cuts, ordered left-to-right by increasing
+    granularity; columns are therefore not shared across rows and each cell is
+    titled with its own k-cut. Each cell is the noise-grid heatmap of mean LCDM
+    Mnu=0 z-score, with a black contour at z=2.
     """
     _, rad_vals, tran_vals = _noise_pivot(noises, np.zeros(len(noises)))
-    present_summ = [s for s in summaries
-                    if any((s, km, kx) in results for km, kx in kminmax_pairs)]
-    present_kmax = [p for p in kminmax_pairs
-                    if any((s, p[0], p[1]) in results for s in summaries)]
-    if not present_summ or not present_kmax:
+    present_summ = [s for s, kcuts in kcuts_by_summary.items()
+                    if any((s, kc[0]) in results for kc in kcuts)]
+    if not present_summ:
         return
 
     n_s = len(present_summ)
-    n_k = len(present_kmax)
+    n_k = max(len(kcuts_by_summary[s]) for s in present_summ)
 
     fig, axs = plt.subplots(n_s, n_k,
                              figsize=(max(2.0, len(tran_vals) * 0.45 + 0.5) * n_k,
-                                      max(1.5, len(rad_vals)  * 0.45 + 0.5) * n_s),
+                                      max(1.7, len(rad_vals)  * 0.45 + 0.7) * n_s),
                              squeeze=False)
 
     vmax = 4.0
     for i, s in enumerate(present_summ):
-        for j, (kmin, kmax) in enumerate(present_kmax):
+        kcuts = kcuts_by_summary[s]
+        short = s.replace('zPk0+zPk2+zPk4', 'zPk024')
+        for j in range(n_k):
             ax = axs[i, j]
-            key = (s, kmin, kmax)
+            if j >= len(kcuts):
+                ax.axis('off')
+                continue
+            kcut, kmin, kmax = kcuts[j]
+            key = (s, kcut)
             if key not in results:
                 ax.axis('off')
                 continue
             grid, _, _ = _noise_pivot(noises, results[key])
             _draw_z_heatmap(ax, grid, rad_vals, tran_vals, vmax=vmax)
-            if i == 0:
-                ax.set_title(f'kmax={kmax:.1f}', fontsize=9)
+            ax.set_title(kcut_label(kmin, kmax, multiline=False), fontsize=8)
             if j == 0:
-                short = s.replace('zPk0+zPk2+zPk4', 'zPk024')
                 ax.set_ylabel(short, fontsize=8)
             ax.set_xticks([])
             ax.set_yticks([])
@@ -472,7 +464,7 @@ def plot_global_z_heatmap(results, summaries, kminmax_pairs, noises, figroot):
     print(f'Saved global z-heatmap: {fname}')
 
 
-def run(basedir, testdir, noises_path, cosm_table_path, summaries, kminmax_pairs, figroot=None):
+def run(basedir, testdir, noises_path, cosm_table_path, figroot=None):
     np.random.seed(42)
     if figroot is None:
         figroot = join(os.path.dirname(os.path.abspath(__file__)), 'figures')
@@ -481,13 +473,18 @@ def run(basedir, testdir, noises_path, cosm_table_path, summaries, kminmax_pairs
     noises  = np.loadtxt(noises_path, delimiter=',')
     n_noise = len(noises)
 
-    z_results = {}  # (summary, kmin, kmax) -> z_per_noise array
+    z_results = {}          # (summary, kcut) -> z_per_noise array
+    kcuts_by_summary = {}   # summary -> ordered list of (kcut, kmin, kmax)
 
-    for s in summaries:
-        for kmin, kmax in kminmax_pairs:
-            kstr  = f'kmin-{kmin:.1f}_kmax-{kmax:.1f}'
+    # Discover which (summary, k-cut) combinations are present on the train side.
+    for s in discover_summaries(basedir):
+        kcuts = discover_kcuts(join(basedir, s))
+        kcuts_by_summary[s] = kcuts
+        for kstr, kmin, kmax in kcuts:
             label = f"{s.replace('+', '_')}_{kstr}"
             figdir = join(figroot, label)
+            klab = kcut_label(kmin, kmax, multiline=False)
+            stitle = f'{s}  ({klab})'
 
             print(f'\n=== {s}  {kstr} ===')
 
@@ -506,24 +503,24 @@ def run(basedir, testdir, noises_path, cosm_table_path, summaries, kminmax_pairs
 
             plot_single_noise_scatter(
                 theta, percs, theta_self, percs_self, masks,
-                noiseidx, noises, n_rep, s, figdir)
+                noiseidx, noises, n_rep, stitle, figdir)
 
             plot_residuals(
                 theta, percs, theta_self, percs_self, masks,
-                noiseidx, noises, n_rep, s, figdir)
+                noiseidx, noises, n_rep, stitle, figdir)
 
             for p in PARAM_INDICES:
                 plot_all_noise_true_vs_pred(
-                    theta, percs, noiseidx, noises, masks, p, s, figdir)
+                    theta, percs, noiseidx, noises, masks, p, stitle, figdir)
 
             z_scores = _compute_lcdm_z(theta, percs, noiseidx, n_noise, masks)
-            z_results[(s, kmin, kmax)] = z_scores
-            plot_lcdm_z_heatmap(z_scores, noises, s, kstr, figdir)
+            z_results[(s, kstr)] = z_scores
+            plot_lcdm_z_heatmap(z_scores, noises, stitle, kstr, figdir)
 
-    plot_global_z_heatmap(z_results, summaries, kminmax_pairs, noises, figroot)
+    plot_global_z_heatmap(z_results, kcuts_by_summary, noises, figroot)
 
 
 if __name__ == '__main__':
     _args = _parse_args()
     run(_args.basedir, _args.testdir, _args.noises_path, _args.cosm_table,
-        SUMMARIES, KMINMAX_PAIRS, figroot=_args.outdir)
+        figroot=_args.outdir)

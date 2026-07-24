@@ -1,22 +1,34 @@
 """
 Median-coverage heatmap grids for SBI posterior estimators across summaries
-and kmax values.
+and k-cuts.
 
 Produces one figure per parameter:
-  - Rows = summaries, cols = kmaxes
-  - Each cell is a 7x7 heatmap of median coverage over the (sigma_rad,
-    sigma_tran) noise grid.
+  - Rows = summaries (increasing feature complexity, top to bottom)
+  - Cols = k-cuts for that summary, ordered left-to-right by increasing
+    granularity (spectral information). Each row keeps its own k-cuts, so the
+    columns are not shared across rows; every cell is titled with its own k-cut.
+  - Each cell is a heatmap of median coverage over the (sigma_rad, sigma_tran)
+    noise grid.
+
+Summaries and k-cuts (including dynamic per-observable kmax cuts such as
+kmin-0.0_kmax-zBk=0.2__zPk=0.4) are discovered from the model tree, so the
+figure adapts to whatever combinations have been saved.
 
 Figures are saved to FIG_DIR.
 """
 import argparse
 import os
+import sys
 from os.path import join, exists, dirname, abspath
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
+
+sys.path.insert(0, dirname(abspath(__file__)))
+from kcut_utils import (  # noqa: E402
+    discover_summaries, discover_kcuts, kcut_label, simple)
 
 _STYLE = join(dirname(abspath(__file__)), 'style.mcstyle')
 try:
@@ -42,17 +54,8 @@ def _parse_args():
     return p.parse_args()
 
 
-z = 'z'
-SUMMARY_NAMES = [
-    f'{z}Pk0',
-    f'{z}Pk0+{z}Pk2+{z}Pk4',
-    f'{z}Pk0+{z}Pk2+{z}Pk4+{z}Bk0',
-    f'{z}Pk0+{z}Pk2+{z}Pk4+{z}EqBk0',
-]
-KMAX_VALS = [0.1, 0.2, 0.3, 0.4]
 PARAM_NAMES = [r'\Omega_m', r'\Omega_b', r'h', r'n_s', r'\sigma_8']
 PARAM_IDXS = [0, 4]
-N_NOISE = 49
 
 _args = _parse_args()
 BASEDIR = _args.basedir
@@ -65,33 +68,22 @@ SIM_TEST = '_'.join(
 os.makedirs(FIG_DIR, exist_ok=True)
 
 noises = np.loadtxt(NOISE_GRID_PATH, delimiter=',')
+SIG_RAD = np.unique(noises[:, 0])
+SIG_TRAN = np.unique(noises[:, 1])
+N_RAD, N_TRAN = len(SIG_RAD), len(SIG_TRAN)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def model_paths(s, kmax):
-    kstr = f'kmin-0.0_kmax-{kmax:.1f}'
-    train = join(BASEDIR, s, kstr)
-    test = join(TESTDIR_BASE, s, kstr)
+def model_paths(s, kcut):
+    train = join(BASEDIR, s, kcut)
+    test = join(TESTDIR_BASE, s, kcut)
     return {
         'ood_samples': join(train, 'testing', SIM_TEST, 'posterior_samples.npy'),
         'theta_ood': join(test, 'theta_test.npy'),
         'noiseid_ood': join(test, 'noiseid_test.npy'),
     }
-
-
-def simple(label):
-    if isinstance(label, list):
-        return [simple(l) for l in label]
-    label = label.replace('nbar', r'$\bar{n}$')
-    label = label.replace('zPk0+zPk2+zPk4', r'$zP_{0,2,4}$')
-    label = label.replace('zPk0', r'$zP_{0}$')
-    label = label.replace('zBk0', r'$zB_{0}$')
-    label = label.replace('zEqBk0', r'$zEqB_{0}$')
-    label = label.replace('zQk0', r'$zQ_{0}$')
-    label = label.replace('+', ', ')
-    return label
 
 
 def median_coverage(samples, trues):
@@ -101,11 +93,11 @@ def median_coverage(samples, trues):
 
 
 # ---------------------------------------------------------------------------
-# Loader: per-(summary, kmax), compute heatmap for ALL params in one pass
+# Loader: per-(summary, kcut), compute a noise-grid heatmap for all params
 # ---------------------------------------------------------------------------
-def load_heatmaps(s, kmax, p_list):
-    """Return dict[p] -> (7,7) median-coverage heatmap, or None."""
-    paths = model_paths(s, kmax)
+def load_heatmaps(s, kcut, p_list):
+    """Return dict[p] -> (N_TRAN, N_RAD) median-coverage heatmap, or None."""
+    paths = model_paths(s, kcut)
     if not all(exists(paths[k]) for k in paths):
         return None
     try:
@@ -113,71 +105,94 @@ def load_heatmaps(s, kmax, p_list):
         theta = np.load(paths['theta_ood'])
         noiseidx = np.load(paths['noiseid_ood'])[:, 0]
     except (OSError, ValueError, IndexError) as e:
-        print(f'Error loading data for {s}, kmax={kmax}: {e}')
+        print(f'Error loading data for {s}, {kcut}: {e}')
         return None
 
-    out = {p: np.full((7, 7), np.nan) for p in p_list}
+    out = {p: np.full((N_TRAN, N_RAD), np.nan) for p in p_list}
 
-    for n in range(N_NOISE):
+    for n in range(len(noises)):
         idx = np.flatnonzero(noiseidx == n)
         if len(idx) == 0:
             continue
+        ir = np.searchsorted(SIG_RAD, noises[n, 0])
+        it = np.searchsorted(SIG_TRAN, noises[n, 1])
         # Pull the slice once per noise level, then index params from RAM
         s_ood = np.asarray(samples[:, idx, :])
         for p in p_list:
-            out[p][divmod(n, 7)] = median_coverage(
-                s_ood[:, :, p], theta[idx, p])
+            out[p][it, ir] = median_coverage(s_ood[:, :, p], theta[idx, p])
 
     return out
 
 
 # ---------------------------------------------------------------------------
-# Build cache once: (summary, kmax) -> {p: heatmap} or None
+# Discover summaries and their k-cuts from the model tree
 # ---------------------------------------------------------------------------
-print('Loading all (summary, kmax) combinations...')
+SUMMARY_NAMES = discover_summaries(BASEDIR)
+# per summary: ordered list of (kcut_dirname, kmin, kmax)
+KCUTS = {s: discover_kcuts(join(BASEDIR, s)) for s in SUMMARY_NAMES}
+SUMMARY_NAMES = [s for s in SUMMARY_NAMES if KCUTS[s]]
+NCOLS = max((len(KCUTS[s]) for s in SUMMARY_NAMES), default=0)
+
+if not SUMMARY_NAMES:
+    print(f'No summaries with k-cuts found under {BASEDIR}')
+    sys.exit(0)
+
+print(f'Discovered {len(SUMMARY_NAMES)} summaries, up to {NCOLS} k-cuts each.')
+
+# ---------------------------------------------------------------------------
+# Build cache once: (summary, kcut) -> {p: heatmap} or None
+# ---------------------------------------------------------------------------
+print('Loading all (summary, k-cut) combinations...')
 cache = {}
 for s in tqdm(SUMMARY_NAMES):
-    for kval in KMAX_VALS:
-        cache[(s, kval)] = load_heatmaps(s, kval, PARAM_IDXS)
+    for kcut, _, _ in KCUTS[s]:
+        cache[(s, kcut)] = load_heatmaps(s, kcut, PARAM_IDXS)
 
 
 # ---------------------------------------------------------------------------
 # Plot: Median-coverage heatmap grids
 # ---------------------------------------------------------------------------
+_rad_ticks = [0, N_RAD // 2, N_RAD - 1] if N_RAD > 2 else list(range(N_RAD))
+_tran_ticks = [0, N_TRAN // 2, N_TRAN - 1] if N_TRAN > 2 else list(range(N_TRAN))
+
 for p_idx in PARAM_IDXS:
-    nrows, ncols = len(SUMMARY_NAMES), len(KMAX_VALS)
-    fig, axs = plt.subplots(nrows, ncols,
-                            figsize=(2.5 * ncols, 2.5 * nrows),
+    nrows = len(SUMMARY_NAMES)
+    fig, axs = plt.subplots(nrows, NCOLS,
+                            figsize=(2.5 * NCOLS, 2.5 * nrows),
                             squeeze=False)
     im = None
     for r, s in enumerate(SUMMARY_NAMES):
-        for c, kval in enumerate(KMAX_VALS):
+        kcuts = KCUTS[s]
+        for c in range(NCOLS):
             ax = axs[r, c]
-            res = cache.get((s, kval))
+            if c >= len(kcuts):
+                ax.set_visible(False)
+                continue
+            kcut, kmin, kmax = kcuts[c]
+            res = cache.get((s, kcut))
             hm = res[p_idx] if (res is not None and p_idx in res) else None
 
             if hm is None or np.all(np.isnan(hm)):
-                print(f'No valid data for {s}, kmax={kval}')
+                print(f'No valid data for {s}, {kcut}')
                 ax.text(0.5, 0.5, 'N/A', ha='center', va='center',
                         transform=ax.transAxes)
                 ax.set_xticks([])
                 ax.set_yticks([])
             else:
                 im = ax.imshow(hm, vmin=0, vmax=1, cmap='RdBu', origin='upper')
-                ax.set_xticks([0, 3, 6])
-                ax.set_yticks([0, 3, 6])
-                ax.set_xticklabels(
-                    [f'{noises[i*7, 1]:.2f}' for i in [0, 3, 6]], fontsize=7)
-                ax.set_yticklabels(
-                    [f'{noises[j, 0]:.2f}' for j in [0, 3, 6]], fontsize=7)
+                ax.set_xticks(_rad_ticks)
+                ax.set_yticks(_tran_ticks)
+                ax.set_xticklabels([f'{SIG_RAD[i]:.2f}' for i in _rad_ticks],
+                                   fontsize=7)
+                ax.set_yticklabels([f'{SIG_TRAN[i]:.2f}' for i in _tran_ticks],
+                                   fontsize=7)
 
-            if r == 0:
-                ax.set_title(f'k<{kval}', fontsize=10)
+            ax.set_title(kcut_label(kmin, kmax, multiline=False), fontsize=8)
             if c == 0:
-                ax.set_ylabel(simple(s) + '\n' + r'$\sigma_{\rm rad}$',
+                ax.set_ylabel(simple(s) + '\n' + r'$\sigma_{\rm tran}$',
                               fontsize=9)
             if r == nrows - 1:
-                ax.set_xlabel(r'$\sigma_{\rm tran}$', fontsize=9)
+                ax.set_xlabel(r'$\sigma_{\rm rad}$', fontsize=9)
 
     if im is not None:
         fig.colorbar(

@@ -47,9 +47,8 @@ cat > "$EXPDIR/config.md" <<EOF
 **Tracer**: $TRACER
 **Model 1**: $SIM1 ($LABEL1)
 **Model 2**: $SIM2 ($LABEL2)
-**kmax sweep summary**: zPk0+zPk2+zPk4
-**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6
-**Feature sweep kmax**: 0.4
+**kmax sweep summary**: zPk0+zPk2+zPk4 (its k-cuts auto-discovered)
+**Feature sweep reference kmax**: 0.4 (per-summary k-cut with closest zPk kmax)
 **Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
 **Notes**: $NOTES
 EOF

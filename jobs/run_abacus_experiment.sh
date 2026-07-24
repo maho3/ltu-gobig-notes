@@ -50,8 +50,8 @@ cat > "$EXPDIR/config.md" <<EOF
 **Test**: $TEST_NBODY/$TEST_SIM
 **Tracer**: $TRACER
 **Test Noise**: noisegrid.csv
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
+**Summaries**: auto-discovered from model tree
+**kmax**: auto-discovered per summary (supports dynamic per-observable cuts, e.g. zPk=0.4, zBk=0.2)
 **Notes**: $NOTES
 EOF
 

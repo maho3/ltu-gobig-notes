@@ -3,8 +3,16 @@ Model scaling diagnostics: kmax and feature-length sweeps.
 
 Replicates the 'Compare models' section of matts_tests/test_toy_noised.ipynb.
 Generates two sets of plots:
-  1. kmax scaling   — fixed summary, increasing kmax
-  2. feature scaling — fixed kmax, increasing feature length (more summary types)
+  1. kmax scaling   — fixed summary, increasing kmax (its k-cuts, ordered by
+     granularity)
+  2. feature scaling — fixed reference kmax, increasing feature length (more
+     summary types)
+
+k-cuts are discovered from the model tree and support dynamic per-observable
+cuts (e.g. kmin-0.0_kmax-zBk=0.2__zPk=0.4) as well as legacy scalar cuts. Since
+every summary here contains the power spectrum, the power-spectrum kmax is used
+as the common numeric axis for the kmax sweep, and to hold a reference cut fixed
+while varying summary complexity.
 
 Edit the CONFIG block below, then run:
 
@@ -18,8 +26,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import sys
 import optuna
-from os.path import join, exists
+from os.path import join, exists, dirname, abspath
+
+sys.path.insert(0, dirname(abspath(__file__)))
+from kcut_utils import (  # noqa: E402
+    discover_kcuts, select_kcut, pk_kmax, kcut_label, simple)
 
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
@@ -49,11 +62,11 @@ def _parse_args():
     return p.parse_args()
 
 
-# kmax sweep: fix one summary, vary kmax
+# kmax sweep: fix one summary, sweep its k-cuts (discovered from disk)
 KMAX_SUMMARY = f'{Z}Pk0+{Z}Pk2+{Z}Pk4'
-KMAX_VALUES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
-# feature sweep: fix kmax, vary summary complexity
+# feature sweep: fix a reference power-spectrum kmax, vary summary complexity.
+# For each summary the k-cut whose Pk kmax is closest to FEAT_KMAX is used.
 FEAT_KMAX = 0.4
 FEAT_SUMMARIES = [
     f'{Z}Pk0',
@@ -85,26 +98,11 @@ matplotlib.rcParams.update({
 })
 
 
-# ── Label helpers ──────────────────────────────────────────────────────────────
-
-def simple(label):
-    if isinstance(label, list):
-        return [simple(l) for l in label]
-    label = label.replace('nbar', r'$\bar{n}$')
-    label = label.replace('zPk0+zPk2+zPk4', r'$zP_{0,2,4}$')
-    label = label.replace('zPk0', r'$zP_{0}$')
-    label = label.replace('zBk0', r'$zB_{0}$')
-    label = label.replace('zEqBk0', r'$zEqB_{0}$')
-    label = label.replace('zQk0', r'$zQ_{0}$')
-    label = label.replace('+', ', ')
-    return label
-
-
 # ── Data helpers ───────────────────────────────────────────────────────────────
 
-def modeldir(nbody, sim, tracer, summary, kmax, wdir=_DEFAULT_WDIR):
-    return join(wdir, nbody, sim, 'models', tracer,
-                summary, f'kmin-0.0_kmax-{kmax:.1f}')
+def summary_dir(nbody, sim, tracer, summary, wdir=_DEFAULT_WDIR):
+    """Directory holding all k-cuts for one summary."""
+    return join(wdir, nbody, sim, 'models', tracer, summary)
 
 
 def load_samples(mdir):
@@ -311,37 +309,44 @@ def plot_fiducial_stdev_bar(modeldirs, labels, title, figdir,
     print(f'  Saved {fpath}')
 
 
-def plot_kmax_scaling(summaries, kmax_values, nbody, sim, tracer,
-                      title, figdir, fname='kmax_scaling.jpg'):
-    """Fiducial stdev vs kmax for each summary type (line plot)."""
+def _kcut_stdev_points(sdir):
+    """For every k-cut under a summary dir, return sorted lists of
+    (pk_kmax, [percentiles per PARAM_IDX]) using the fiducial stdev."""
+    pts = []
+    for dirname, kmin, kmax in discover_kcuts(sdir):
+        stdev = fiducial_stdev(join(sdir, dirname))
+        if stdev is None:
+            print(f'  SKIP (no data): {join(sdir, dirname)}')
+            continue
+        percs = [np.percentile(stdev[:, p], [50, 16, 84]) for p in PARAM_IDXS]
+        pts.append((pk_kmax(kmax), percs))
+    pts.sort(key=lambda t: t[0])
+    return pts
+
+
+def plot_kmax_scaling(summaries, nbody, sim, tracer,
+                      title, figdir, wdir=_DEFAULT_WDIR, fname='kmax_scaling.jpg'):
+    """Fiducial stdev vs power-spectrum kmax for each summary (line plot).
+
+    x is the Pk-family kmax of each discovered k-cut, so both scalar and dynamic
+    cuts land on a common numeric axis of increasing granularity."""
     markers = ['o', 's', '*', 'D', '^', 'v']
-    kmax_arr = np.array(kmax_values)
-    kspan = kmax_arr.max() - kmax_arr.min()
 
     f, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
     for g, s in enumerate(summaries):
-        off = (g - (len(summaries) - 1) / 2) * 0.01 * kspan
-        xs, percs_list = [], [[], []]
-        for k in kmax_values:
-            mdir = modeldir(nbody, sim, tracer, s, k)
-            stdev = fiducial_stdev(mdir)
-            if stdev is None:
-                print(f'  SKIP kmax_scaling (no data): {mdir}')
-                continue
-            xs.append(k + off)
-            for j, p in enumerate(PARAM_IDXS):
-                percs_list[j].append(
-                    np.percentile(stdev[:, p], [50, 16, 84]))
-        if not xs:
+        pts = _kcut_stdev_points(summary_dir(nbody, sim, tracer, s, wdir))
+        if not pts:
             continue
+        off = (g - (len(summaries) - 1) / 2) * 0.005
+        xs = [p[0] + off for p in pts]
         for j, p in enumerate(PARAM_IDXS):
-            perc = np.array(percs_list[j])
+            perc = np.array([pt[1][j] for pt in pts])
             axs[j].errorbar(
                 xs, perc[:, 0],
                 yerr=[perc[:, 0] - perc[:, 1], perc[:, 2] - perc[:, 0]],
                 label=simple(s), color=f'C{g}',
                 marker=markers[g % len(markers)], linestyle='-', capsize=3)
-            axs[j].set(xlabel=r'$k_{\max}\ [h/\mathrm{Mpc}]$',
+            axs[j].set(xlabel=r'$k_{\max}^{P}\ [h/\mathrm{Mpc}]$',
                        ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
                        ylim=(0, None))
             axs[j].grid(True)
@@ -355,14 +360,21 @@ def plot_kmax_scaling(summaries, kmax_values, nbody, sim, tracer,
     print(f'  Saved {fpath}')
 
 
-def plot_feature_length_scaling(summaries, kmax, nbody, sim, tracer,
-                                title, figdir, fname='feature_length_scaling.jpg'):
-    """Fiducial stdev vs feature vector length (x_len) at fixed kmax."""
+def plot_feature_length_scaling(summaries, ref_kmax, nbody, sim, tracer,
+                                title, figdir, wdir=_DEFAULT_WDIR,
+                                fname='feature_length_scaling.jpg'):
+    """Fiducial stdev vs feature vector length (x_len) at a reference kmax.
+
+    For each summary, the k-cut whose Pk kmax is closest to ref_kmax is used."""
     f, axs = plt.subplots(1, 2, figsize=(10, 5))
-    xlens, stdevs = [], []
-    labels_valid = []
+    xlens, stdevs, labels_valid = [], [], []
     for i, s in enumerate(summaries):
-        mdir = modeldir(nbody, sim, tracer, s, kmax)
+        sdir = summary_dir(nbody, sim, tracer, s, wdir)
+        sel = select_kcut(sdir, ref_kmax)
+        if sel is None:
+            print(f'  SKIP feature_scaling (no k-cut): {sdir}')
+            continue
+        mdir = join(sdir, sel[0])
         if not exists(join(mdir, 'x_test.npy')):
             print(f'  SKIP feature_scaling (no x_test): {mdir}')
             continue
@@ -395,40 +407,31 @@ def plot_feature_length_scaling(summaries, kmax, nbody, sim, tracer,
     print(f'  Saved {fpath}')
 
 
-def plot_kmax_scaling_multisim(summaries, kmax_values, sim_configs, tracer,
+def plot_kmax_scaling_multisim(summaries, sim_configs, tracer,
                                title, figdir, fname='kmax_scaling_multisim.jpg'):
-    """Fiducial stdev vs kmax, overlaying multiple sims. Color = summary, linestyle = sim."""
+    """Fiducial stdev vs Pk kmax, overlaying multiple sims. Color = summary,
+    linestyle = sim."""
     markers = ['o', 's', '*', 'D', '^', 'v']
     linestyles = ['-', '--', ':', '-.']
-    kmax_arr = np.array(kmax_values)
-    kspan = kmax_arr.max() - kmax_arr.min()
 
     f, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
     for g, s in enumerate(summaries):
         for si, cfg in enumerate(sim_configs):
-            off = (g - (len(summaries) - 1) / 2) * 0.01 * kspan
-            xs, percs_list = [], [[], []]
-            for k in kmax_values:
-                mdir = modeldir(cfg['nbody'], cfg['sim'], tracer, s, k, cfg['wdir'])
-                stdev = fiducial_stdev(mdir)
-                if stdev is None:
-                    print(f'  SKIP kmax_scaling_multisim (no data): {mdir}')
-                    continue
-                xs.append(k + off)
-                for j, p in enumerate(PARAM_IDXS):
-                    percs_list[j].append(
-                        np.percentile(stdev[:, p], [50, 16, 84]))
-            if not xs:
+            pts = _kcut_stdev_points(
+                summary_dir(cfg['nbody'], cfg['sim'], tracer, s, cfg['wdir']))
+            if not pts:
                 continue
+            off = (g - (len(summaries) - 1) / 2) * 0.005
+            xs = [p[0] + off for p in pts]
             for j, p in enumerate(PARAM_IDXS):
-                perc = np.array(percs_list[j])
+                perc = np.array([pt[1][j] for pt in pts])
                 axs[j].errorbar(
                     xs, perc[:, 0],
                     yerr=[perc[:, 0] - perc[:, 1], perc[:, 2] - perc[:, 0]],
                     label=f"{simple(s)} ({cfg['label']})", color=f'C{g}',
                     marker=markers[g % len(markers)],
                     linestyle=linestyles[si % len(linestyles)], capsize=3)
-                axs[j].set(xlabel=r'$k_{\max}\ [h/\mathrm{Mpc}]$',
+                axs[j].set(xlabel=r'$k_{\max}^{P}\ [h/\mathrm{Mpc}]$',
                            ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
                            ylim=(0, None))
                 axs[j].grid(True)
@@ -442,10 +445,11 @@ def plot_kmax_scaling_multisim(summaries, kmax_values, sim_configs, tracer,
     print(f'  Saved {fpath}')
 
 
-def plot_feature_length_scaling_multisim(summaries, kmax, sim_configs, tracer,
+def plot_feature_length_scaling_multisim(summaries, ref_kmax, sim_configs, tracer,
                                           title, figdir,
                                           fname='feature_length_scaling_multisim.jpg'):
-    """Fiducial stdev vs feature vector length, overlaying multiple sims at fixed kmax."""
+    """Fiducial stdev vs feature vector length, overlaying multiple sims at a
+    reference kmax."""
     markers = ['o', 's', '*', 'D', '^', 'v']
 
     f, axs = plt.subplots(1, 2, figsize=(10, 5))
@@ -456,7 +460,12 @@ def plot_feature_length_scaling_multisim(summaries, kmax, sim_configs, tracer,
     for cfg in sim_configs:
         xlens, stdevs, labels_valid = [], [], []
         for s in summaries:
-            mdir = modeldir(cfg['nbody'], cfg['sim'], tracer, s, kmax, cfg['wdir'])
+            sdir = summary_dir(cfg['nbody'], cfg['sim'], tracer, s, cfg['wdir'])
+            sel = select_kcut(sdir, ref_kmax)
+            if sel is None:
+                print(f'  SKIP feature_scaling_multisim (no k-cut): {sdir}')
+                continue
+            mdir = join(sdir, sel[0])
             if not exists(join(mdir, 'x_test.npy')):
                 print(f'  SKIP feature_scaling_multisim (no x_test): {mdir}')
                 continue
@@ -500,8 +509,7 @@ def plot_feature_length_scaling_multisim(summaries, kmax, sim_configs, tracer,
 # ── Multi-sim comparison ────────────────────────────────────────────────────────
 
 def run_multisim(sim_configs, tracer,
-                 kmax_summary, kmax_values,
-                 feat_kmax, feat_summaries,
+                 kmax_summary, feat_kmax, feat_summaries,
                  figroot=None, run_individual=True):
     """Compare constraining power across multiple (nbody, sim) model dirs
     (e.g. same sim with/without HOD posterior inference) as a function of
@@ -520,8 +528,7 @@ def run_multisim(sim_configs, tracer,
                   f"({cfg['nbody']}/{cfg['sim']}) ###")
             run(wdir=cfg['wdir'], nbody=cfg['nbody'], sim=cfg['sim'],
                 tracer=tracer, kmax_summary=kmax_summary,
-                kmax_values=kmax_values, feat_kmax=feat_kmax,
-                feat_summaries=feat_summaries,
+                feat_kmax=feat_kmax, feat_summaries=feat_summaries,
                 figroot=join(figroot, cfg['label']))
 
     print('\n=== multi-sim comparison ===')
@@ -530,10 +537,10 @@ def run_multisim(sim_configs, tracer,
 
     labels_str = ' vs '.join(cfg['label'] for cfg in sim_configs)
     kmax_title = f'{labels_str}\n{simple(kmax_summary)}: varying kmax'
-    plot_kmax_scaling_multisim(feat_summaries, kmax_values, sim_configs, tracer,
+    plot_kmax_scaling_multisim(feat_summaries, sim_configs, tracer,
                                kmax_title, comp_dir)
 
-    feat_title = f'{labels_str}\nkmax={feat_kmax}: varying summary'
+    feat_title = f'{labels_str}\nkmax~{feat_kmax}: varying summary'
     plot_feature_length_scaling_multisim(feat_summaries, feat_kmax, sim_configs,
                                          tracer, feat_title, comp_dir)
 
@@ -541,8 +548,7 @@ def run_multisim(sim_configs, tracer,
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def run(wdir, nbody, sim, tracer,
-        kmax_summary, kmax_values,
-        feat_kmax, feat_summaries,
+        kmax_summary, feat_kmax, feat_summaries,
         figroot=None):
     np.random.seed(42)
     if figroot is None:
@@ -557,36 +563,47 @@ def run(wdir, nbody, sim, tracer,
     kmax_dir = join(figroot, 'kmax_sweep')
     os.makedirs(kmax_dir, exist_ok=True)
 
-    kmax_mdirs = [modeldir(nbody, sim, tracer, kmax_summary, k, wdir)
-                  for k in kmax_values]
-    kmax_labels = [f'k<{k}' for k in kmax_values]
+    sdir = summary_dir(nbody, sim, tracer, kmax_summary, wdir)
+    kcuts = discover_kcuts(sdir)  # ordered by increasing granularity
+    kmax_mdirs = [join(sdir, d) for d, _, _ in kcuts]
+    kmax_labels = [kcut_label(kmin, kmax, multiline=False)
+                   for _, kmin, kmax in kcuts]
     kmax_title = f'{base_title}\n{simple(kmax_summary)}: varying kmax'
 
-    plot_optuna_history(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
-    plot_stdev_vs_theta(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
-    plot_aggregate_calibration(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
-    plot_fiducial_stdev_bar(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
+    if kmax_mdirs:
+        plot_optuna_history(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
+        plot_stdev_vs_theta(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
+        plot_aggregate_calibration(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
+        plot_fiducial_stdev_bar(kmax_mdirs, kmax_labels, kmax_title, kmax_dir)
+    else:
+        print(f'  No k-cuts found for {kmax_summary} under {sdir}')
 
-    # Also make the line-plot version of kmax scaling for all feat_summaries
-    plot_kmax_scaling(feat_summaries, kmax_values, nbody, sim, tracer,
-                      f'{base_title}\nkmax scaling', kmax_dir)
+    # Line-plot version of kmax scaling across all feat_summaries
+    plot_kmax_scaling(feat_summaries, nbody, sim, tracer,
+                      f'{base_title}\nkmax scaling', kmax_dir, wdir)
 
     # ── 2. Feature-length sweep ────────────────────────────────────────────────
     print('\n=== feature-length sweep ===')
     feat_dir = join(figroot, 'feature_sweep')
     os.makedirs(feat_dir, exist_ok=True)
 
-    feat_mdirs = [modeldir(nbody, sim, tracer, s, feat_kmax, wdir)
-                  for s in feat_summaries]
-    feat_labels = [s for s in feat_summaries]
-    feat_title = f'{base_title}\nkmax={feat_kmax}: varying summary'
+    feat_mdirs, feat_labels = [], []
+    for s in feat_summaries:
+        sel = select_kcut(summary_dir(nbody, sim, tracer, s, wdir), feat_kmax)
+        if sel is None:
+            print(f'  SKIP feature sweep (no k-cut): {s}')
+            continue
+        feat_mdirs.append(join(summary_dir(nbody, sim, tracer, s, wdir), sel[0]))
+        feat_labels.append(s)
+    feat_title = f'{base_title}\nkmax~{feat_kmax}: varying summary'
 
-    plot_optuna_history(feat_mdirs, feat_labels, feat_title, feat_dir)
-    plot_stdev_vs_theta(feat_mdirs, feat_labels, feat_title, feat_dir)
-    plot_aggregate_calibration(feat_mdirs, feat_labels, feat_title, feat_dir)
-    plot_fiducial_stdev_bar(feat_mdirs, feat_labels, feat_title, feat_dir)
+    if feat_mdirs:
+        plot_optuna_history(feat_mdirs, feat_labels, feat_title, feat_dir)
+        plot_stdev_vs_theta(feat_mdirs, feat_labels, feat_title, feat_dir)
+        plot_aggregate_calibration(feat_mdirs, feat_labels, feat_title, feat_dir)
+        plot_fiducial_stdev_bar(feat_mdirs, feat_labels, feat_title, feat_dir)
     plot_feature_length_scaling(feat_summaries, feat_kmax, nbody, sim, tracer,
-                                feat_title, feat_dir)
+                                feat_title, feat_dir, wdir)
 
 
 if __name__ == '__main__':
@@ -602,7 +619,6 @@ if __name__ == '__main__':
             sim_configs=_sim_configs,
             tracer=_args.tracer,
             kmax_summary=KMAX_SUMMARY,
-            kmax_values=KMAX_VALUES,
             feat_kmax=FEAT_KMAX,
             feat_summaries=FEAT_SUMMARIES,
             figroot=_args.outdir,
@@ -614,7 +630,6 @@ if __name__ == '__main__':
             sim=_args.sim,
             tracer=_args.tracer,
             kmax_summary=KMAX_SUMMARY,
-            kmax_values=KMAX_VALUES,
             feat_kmax=FEAT_KMAX,
             feat_summaries=FEAT_SUMMARIES,
             figroot=_args.outdir,

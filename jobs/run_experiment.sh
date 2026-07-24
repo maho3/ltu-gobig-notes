@@ -10,16 +10,16 @@
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 # TYPE: "ood" or "self"
-TYPE=self
+TYPE=ood
 
 # Training suite
-TRAIN_NBODY=abacuslike
-TRAIN_SIM=fastpm_charm6_comp
+TRAIN_NBODY=quijotelike
+TRAIN_SIM=fastpm_charm7
 TRACER=galaxy
 
 # Test suite (OOD only; ignored for TYPE=self)
 TEST_NBODY=quijote
-TEST_SIM=nbody_comp_gridnoise
+TEST_SIM=nbody_mixk_gridnoise
 
 # Working directory containing all suite data
 WDIR=/work/hdd/bdne/maho3/cmass-ili
@@ -58,8 +58,8 @@ cat > "$EXPDIR/config.md" <<EOF
 **Test**: $TEST_NBODY/$TEST_SIM
 **Tracer**: $TRACER
 **Test Noise**: noisegrid.csv
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
+**Summaries**: auto-discovered from model tree
+**kmax**: auto-discovered per summary (supports dynamic per-observable cuts, e.g. zPk=0.4, zBk=0.2)
 **Notes**: $NOTES
 EOF
 else
@@ -67,9 +67,8 @@ cat > "$EXPDIR/config.md" <<EOF
 **Script**: model_scaling_diagnostics.py
 **Suite**: $TRAIN_NBODY/$TRAIN_SIM
 **Tracer**: $TRACER
-**kmax sweep summary**: zPk0+zPk2+zPk4
-**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6
-**Feature sweep kmax**: 0.4
+**kmax sweep summary**: zPk0+zPk2+zPk4 (its k-cuts auto-discovered)
+**Feature sweep reference kmax**: 0.4 (per-summary k-cut with closest zPk kmax)
 **Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
 **Notes**: $NOTES
 EOF

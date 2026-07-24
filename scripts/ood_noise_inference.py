@@ -15,7 +15,11 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import os
-from os.path import join
+import sys
+from os.path import join, dirname, abspath
+
+sys.path.insert(0, dirname(abspath(__file__)))
+from kcut_utils import discover_summaries, discover_kcuts, kcut_label  # noqa: E402
 
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
@@ -23,21 +27,6 @@ _WDIR = '/work/hdd/bdne/maho3/cmass-ili'
 _DEFAULT_BASEDIR = f'{_WDIR}/quijotelike/fastpm_charm6/models/galaxy'
 _DEFAULT_TESTDIR = f'{_WDIR}/quijote/nbody_hodz_gridnoise/models/galaxy'
 _DEFAULT_NOISES_PATH = f'{_WDIR}/noise_priors/noisegrid.csv'
-
-SUMMARIES = [
-    'zPk0+zPk2+zPk4',
-    'zPk0+zPk2+zPk4+zEqBk0',
-    'zPk0+zPk2+zPk4+zSqBk0',
-    'zPk0+zPk2+zPk4+zBk0',
-]
-
-KMINMAX_PAIRS = [
-    (0.0, 0.2),
-    (0.0, 0.3),
-    (0.0, 0.4),
-    (0.0, 0.5),
-    (0.0, 0.6),
-]
 
 
 def _parse_args():
@@ -345,7 +334,7 @@ def plot_median_coverage_heatmap(samples, theta, noiseidx, noises, s, figdir, la
     print(f'  Saved {fname}')
 
 
-def run(basedir, testdir, noises_path, summaries, kminmax_pairs, figroot=None):
+def run(basedir, testdir, noises_path, figroot=None):
     np.random.seed(42)
     if figroot is None:
         figroot = join(os.path.dirname(os.path.abspath(__file__)), 'figures')
@@ -354,9 +343,10 @@ def run(basedir, testdir, noises_path, summaries, kminmax_pairs, figroot=None):
     noises = np.loadtxt(noises_path, delimiter=',')
     n_noise = len(noises)
 
-    for s in summaries:
-        for kmin, kmax in kminmax_pairs:
-            kstr = f'kmin-{kmin:.1f}_kmax-{kmax:.1f}'
+    # Discover which (summary, k-cut) combinations are present on the train side.
+    # k-cuts include dynamic per-observable cuts (e.g. kmax-zBk=0.2__zPk=0.4).
+    for s in discover_summaries(basedir):
+        for kstr, kmin, kmax in discover_kcuts(join(basedir, s)):
             label = f"{s.replace('+', '_')}_{kstr}"
             figdir = join(figroot, label)
             os.makedirs(figdir, exist_ok=True)
@@ -371,31 +361,35 @@ def run(basedir, testdir, noises_path, summaries, kminmax_pairs, figroot=None):
                 print(f'  SKIP (missing file): {e}')
                 continue
 
+            # Title (used as the suptitle in every figure below) carries the
+            # summary and its k-cut, so dynamic cuts are legible on the plots.
+            # Keep `s` itself intact — it keys the next k-cut's paths.
+            title = f'{s}  ({kcut_label(kmin, kmax, multiline=False)})'
+
             # Pick a representative noise index near the middle of the grid
             n_rep = n_noise // 2
 
             plot_single_noise_scatter(
                 theta, percs, theta_self, percs_self,
-                noiseidx, noises, n_rep, s, figdir, label)
+                noiseidx, noises, n_rep, title, figdir, label)
 
             plot_residuals(
                 theta, percs, theta_self, percs_self,
-                noiseidx, noises, n_rep, s, figdir, label)
+                noiseidx, noises, n_rep, title, figdir, label)
 
             for p in PARAM_INDICES:
                 plot_all_noise_true_vs_pred(
-                    theta, percs, noiseidx, noises, p, s, figdir, label)
+                    theta, percs, noiseidx, noises, p, title, figdir, label)
 
                 plot_coverage_grid(
                     samples, theta, noiseidx, noises,
                     samples_self, theta_self,
-                    p, s, figdir, label)
+                    p, title, figdir, label)
 
             plot_median_coverage_heatmap(
-                samples, theta, noiseidx, noises, s, figdir, label)
+                samples, theta, noiseidx, noises, title, figdir, label)
 
 
 if __name__ == '__main__':
     _args = _parse_args()
-    run(_args.basedir, _args.testdir, _args.noises_path, SUMMARIES, KMINMAX_PAIRS,
-        figroot=_args.outdir)
+    run(_args.basedir, _args.testdir, _args.noises_path, figroot=_args.outdir)
