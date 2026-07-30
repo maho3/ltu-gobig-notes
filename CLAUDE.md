@@ -43,6 +43,50 @@ clustering summary statistics using simulation-based inference (SBI / NPE).
 
 ---
 
+## Dynamic k-cuts (applies to all experiment types)
+
+`kmax` is no longer a single scalar per experiment. A k-cut may apply a
+**different kmax to each observable family**, encoded in the model-tree
+directory name:
+- Legacy scalar cut (one kmax for the whole feature vector):
+  `kmin-0.0_kmax-0.4`
+- Dynamic per-observable cut (`def` abbreviates the `default` key):
+  `kmin-0.0_kmax-zBk=0.2__zPk=0.4`
+
+Model tree layout: `<wdir>/<nbody>/<sim>/models/<tracer>/<summary>/<kcut>/...`.
+Both cut styles, in any combination, can coexist under one summary.
+
+**Scripts discover, never assume.** `scripts/kcut_utils.py` is the shared source
+of truth. The plotting scripts scan the model tree for whatever (summary, k-cut)
+combinations exist rather than iterating a hardcoded scalar-kmax grid. Key
+helpers: `parse_kcut`, `discover_summaries`, `discover_kcuts`, `resolve_kmax`
+(per-observable kmax for a summary), `pk_kmax` (the power-spectrum-family cut,
+common to every summary here), `granularity`, `select_kcut`, `kcut_label`.
+
+**Ordering (granularity).** Within a summary, k-cuts are ordered by **increasing
+Pk cut first, then increasing Bk cut** (`granularity`). In joint/overview plots
+this reads left-to-right (heatmap columns) or low-to-high (line-plot x) as
+increasing spectral information. Because each summary keeps its own k-cuts,
+overview grids are ragged: rows/columns are not shared across summaries and each
+cell is labelled with its own k-cut.
+
+**Common numeric axis.** For line plots the x-axis is `pk_kmax` (the zPk cut),
+which every summary shares. In `model_scaling_diagnostics.py`'s `kmax_scaling`
+plot, each summary (feature type) is its own row of panels; within a row, k-cuts
+that share a Pk kmax but differ in Bk cut are separate series (color + marker +
+x-offset, e.g. `k_B<0.2` line vs a `k_B<0.4` point) so dynamic cuts stay legible
+instead of crowding one panel (the multisim variant overlays sims per row via
+color/linestyle). The feature-length sweep holds a **reference Pk kmax** fixed
+(`select_kcut` picks each summary's cut whose Pk kmax is closest, tie-broken
+toward the smaller Bk cut) while feature length grows, and each point's label
+quotes the actual k-cut used.
+
+Config-side: OOD test suites should be preprocessed with `val_frac=0,
+test_frac=1` so every simulation is a test point; a normal `0.1/0.1` split
+leaves only ~10% in the test set (few points per noise bin).
+
+---
+
 ## Experiment types
 
 ### 1. OOD inference
@@ -54,8 +98,11 @@ suite (e.g. Quijote N-body, Abacus) across a noise grid of (σ_rad, σ_tran).
 - Overview: per-parameter median coverage heatmap grids across all (summary, kmax) combinations
 - Zoom-in: per-(summary, kmax) folder with PIT curves, true vs predicted, scatter and residual plots at a representative noise index
 
-**Zoom-in folder naming**: folders use underscores in place of `+`, e.g.
-`zPk0_zPk2_zPk4_kmin-0.0_kmax-0.2`. Scan the actual `figures/` directory to get correct folder names — do not construct them from summary strings.
+**Zoom-in folder naming**: folders use underscores in place of `+`, followed by
+the k-cut directory name, e.g. `zPk0_zPk2_zPk4_kmin-0.0_kmax-0.2` (scalar cut) or
+`zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.2__zPk=0.4` (dynamic cut; see Dynamic
+k-cuts above). Scan the actual `figures/` directory to get correct folder names —
+do not construct them from summary strings.
 
 ---
 

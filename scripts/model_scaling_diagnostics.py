@@ -32,7 +32,7 @@ from os.path import join, exists, dirname, abspath
 
 sys.path.insert(0, dirname(abspath(__file__)))
 from kcut_utils import (  # noqa: E402
-    discover_kcuts, select_kcut, pk_kmax, kcut_label, simple)
+    discover_kcuts, select_kcut, pk_kmax, resolve_kmax, kcut_label, simple)
 
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
@@ -309,49 +309,96 @@ def plot_fiducial_stdev_bar(modeldirs, labels, title, figdir,
     print(f'  Saved {fpath}')
 
 
-def _kcut_stdev_points(sdir):
-    """For every k-cut under a summary dir, return sorted lists of
-    (pk_kmax, [percentiles per PARAM_IDX]) using the fiducial stdev."""
-    pts = []
+# Visual channels for the kmax-scaling line plots: color = summary,
+# marker = bispectrum cut, linestyle = sim (multisim only).
+_KMAX_MARKERS = ['o', 's', 'D', '^', 'v', '*', 'P', 'X']
+_SIM_LINESTYLES = ['-', '--', ':', '-.']
+
+
+def _bk_of(summary, kmax):
+    """Bispectrum-family kmax for a summary's k-cut, or None if the summary has
+    no bispectrum component (so all its cuts form a single Pk series)."""
+    if not any(('Bk' in part or 'Qk' in part) for part in summary.split('+')):
+        return None
+    return resolve_kmax(kmax, 'zBk0')
+
+
+def _kcut_series(sdir, summary):
+    """Group a summary's k-cuts by bispectrum cut.
+
+    Returns dict {bk: sorted [(pk_kmax, [percentiles per PARAM_IDX]), ...]},
+    where bk is the bispectrum-family kmax (None for Pk-only summaries). Each
+    group becomes one line across Pk kmax; distinct bk values become distinct
+    series, so experiments that share a Pk kmax but differ in Bk cut stay
+    separate and labelled rather than collapsing onto one point."""
+    by_bk = {}
     for dirname, kmin, kmax in discover_kcuts(sdir):
         stdev = fiducial_stdev(join(sdir, dirname))
         if stdev is None:
             print(f'  SKIP (no data): {join(sdir, dirname)}')
             continue
         percs = [np.percentile(stdev[:, p], [50, 16, 84]) for p in PARAM_IDXS]
-        pts.append((pk_kmax(kmax), percs))
-    pts.sort(key=lambda t: t[0])
-    return pts
+        by_bk.setdefault(_bk_of(summary, kmax), []).append(
+            (pk_kmax(kmax), percs))
+    for bk in by_bk:
+        by_bk[bk].sort(key=lambda t: t[0])
+    return by_bk
+
+
+def _bk_marker(bk, bk_vals):
+    """Marker encoding the bispectrum cut, shared across summaries/sims."""
+    if bk is None:
+        return 'o'
+    return _KMAX_MARKERS[(bk_vals.index(bk) + 1) % len(_KMAX_MARKERS)]
 
 
 def plot_kmax_scaling(summaries, nbody, sim, tracer,
                       title, figdir, wdir=_DEFAULT_WDIR, fname='kmax_scaling.jpg'):
-    """Fiducial stdev vs power-spectrum kmax for each summary (line plot).
+    """Fiducial stdev vs power-spectrum kmax, one summary (feature type) per row.
 
-    x is the Pk-family kmax of each discovered k-cut, so both scalar and dynamic
-    cuts land on a common numeric axis of increasing granularity."""
-    markers = ['o', 's', '*', 'D', '^', 'v']
+    Splitting summaries into their own rows declutters the overlay. Within a
+    row, k-cuts that share a Pk kmax but differ in Bk cut are separate series
+    (color + marker + small x-offset), so dynamic cuts stay legible."""
+    rows = []  # (summary, by_bk)
+    for s in summaries:
+        by_bk = _kcut_series(summary_dir(nbody, sim, tracer, s, wdir), s)
+        if by_bk:
+            rows.append((s, by_bk))
+    if not rows:
+        print('  SKIP kmax_scaling (no data)')
+        return
 
-    f, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
-    for g, s in enumerate(summaries):
-        pts = _kcut_stdev_points(summary_dir(nbody, sim, tracer, s, wdir))
-        if not pts:
-            continue
-        off = (g - (len(summaries) - 1) / 2) * 0.005
-        xs = [p[0] + off for p in pts]
+    nrows = len(rows)
+    f, axs = plt.subplots(nrows, 2, figsize=(10, 2.6 * nrows + 0.6),
+                          sharex=True, squeeze=False)
+    for r, (s, by_bk) in enumerate(rows):
+        bk_vals = sorted(bk for bk in by_bk if bk is not None)
+        groups = sorted(by_bk, key=lambda b: (b is not None, b))
+        has_bk = any(bk is not None for bk in groups)
+        offs = (np.linspace(-0.02, 0.02, len(groups))
+                if len(groups) > 1 else [0.0])
+        for gi, bk in enumerate(groups):
+            pts = by_bk[bk]
+            xs = [p[0] + offs[gi] for p in pts]
+            lab = 'Pk only' if bk is None else fr'$k_B\!<\!{bk:g}$'
+            for j, p in enumerate(PARAM_IDXS):
+                perc = np.array([pt[1][j] for pt in pts])
+                axs[r, j].errorbar(
+                    xs, perc[:, 0],
+                    yerr=[perc[:, 0] - perc[:, 1], perc[:, 2] - perc[:, 0]],
+                    label=lab, color=f'C{gi}',
+                    marker=_bk_marker(bk, bk_vals), linestyle='-', capsize=3)
         for j, p in enumerate(PARAM_IDXS):
-            perc = np.array([pt[1][j] for pt in pts])
-            axs[j].errorbar(
-                xs, perc[:, 0],
-                yerr=[perc[:, 0] - perc[:, 1], perc[:, 2] - perc[:, 0]],
-                label=simple(s), color=f'C{g}',
-                marker=markers[g % len(markers)], linestyle='-', capsize=3)
-            axs[j].set(xlabel=r'$k_{\max}^{P}\ [h/\mathrm{Mpc}]$',
-                       ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
-                       ylim=(0, None))
-            axs[j].grid(True)
+            ylabel = fr'$\Delta {PARAM_NAMES[p]}$'
+            if j == 0:
+                ylabel = f'{simple(s)}\n' + ylabel
+            axs[r, j].set(ylabel=ylabel, ylim=(0, None))
+            axs[r, j].grid(True)
+            if r == nrows - 1:
+                axs[r, j].set_xlabel(r'$k_{\max}^{P}\ [h/\mathrm{Mpc}]$')
+        if has_bk:
+            axs[r, 1].legend(fontsize=8, loc='upper right')
 
-    axs[1].legend(fontsize=9, loc='upper right', ncol=1)
     f.suptitle(title)
     plt.tight_layout()
     fpath = join(figdir, fname)
@@ -365,7 +412,8 @@ def plot_feature_length_scaling(summaries, ref_kmax, nbody, sim, tracer,
                                 fname='feature_length_scaling.jpg'):
     """Fiducial stdev vs feature vector length (x_len) at a reference kmax.
 
-    For each summary, the k-cut whose Pk kmax is closest to ref_kmax is used."""
+    For each summary, the k-cut whose Pk kmax is closest to ref_kmax is used;
+    each point's legend entry quotes the actual (possibly dynamic) k-cut."""
     f, axs = plt.subplots(1, 2, figsize=(10, 5))
     xlens, stdevs, labels_valid = [], [], []
     for i, s in enumerate(summaries):
@@ -384,7 +432,10 @@ def plot_feature_length_scaling(summaries, ref_kmax, nbody, sim, tracer,
             continue
         xlens.append(feature_length(mdir))
         stdevs.append(stdev)
-        labels_valid.append(s)
+        # Quote the actual k-cut used (Pk-only summaries -> scalar; bispectrum
+        # summaries -> the resolved dynamic cut, e.g. zPk<0.4, zBk<0.2).
+        labels_valid.append(
+            f'{simple(s)} [{kcut_label(sel[1], sel[2], multiline=False)}]')
 
     for j, p in enumerate(PARAM_IDXS):
         ax = axs[j]
@@ -392,13 +443,13 @@ def plot_feature_length_scaling(summaries, ref_kmax, nbody, sim, tracer,
             perc = np.percentile(stdev[:, p], [50, 16, 84])
             ax.errorbar(xl, perc[0],
                         yerr=[[perc[0] - perc[1]], [perc[2] - perc[0]]],
-                        fmt='o', color=f'C{i}', label=simple(lab), capsize=4)
+                        fmt='o', color=f'C{i}', label=lab, capsize=4)
         ax.set(xlabel='Feature vector length',
                ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
                ylim=(0, None))
         ax.grid(True)
 
-    axs[1].legend(fontsize=9, loc='upper right')
+    axs[1].legend(fontsize=8, loc='upper right')
     f.suptitle(title)
     plt.tight_layout()
     fpath = join(figdir, fname)
@@ -409,34 +460,56 @@ def plot_feature_length_scaling(summaries, ref_kmax, nbody, sim, tracer,
 
 def plot_kmax_scaling_multisim(summaries, sim_configs, tracer,
                                title, figdir, fname='kmax_scaling_multisim.jpg'):
-    """Fiducial stdev vs Pk kmax, overlaying multiple sims. Color = summary,
-    linestyle = sim."""
-    markers = ['o', 's', '*', 'D', '^', 'v']
-    linestyles = ['-', '--', ':', '-.']
-
-    f, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
-    for g, s in enumerate(summaries):
+    """Fiducial stdev vs Pk kmax, one summary (feature type) per row; sims
+    overlaid within each row. Color = sim, linestyle = sim, marker = Bk cut."""
+    rows = []  # (summary, [(si, cfg, by_bk), ...])
+    for s in summaries:
+        per_sim = []
         for si, cfg in enumerate(sim_configs):
-            pts = _kcut_stdev_points(
-                summary_dir(cfg['nbody'], cfg['sim'], tracer, s, cfg['wdir']))
-            if not pts:
-                continue
-            off = (g - (len(summaries) - 1) / 2) * 0.005
-            xs = [p[0] + off for p in pts]
+            by_bk = _kcut_series(
+                summary_dir(cfg['nbody'], cfg['sim'], tracer, s, cfg['wdir']), s)
+            if by_bk:
+                per_sim.append((si, cfg, by_bk))
+        if per_sim:
+            rows.append((s, per_sim))
+    if not rows:
+        print('  SKIP kmax_scaling_multisim (no data)')
+        return
+
+    nrows = len(rows)
+    f, axs = plt.subplots(nrows, 2, figsize=(10, 2.6 * nrows + 0.6),
+                          sharex=True, squeeze=False)
+    for r, (s, per_sim) in enumerate(rows):
+        bk_vals = sorted({bk for _, _, by_bk in per_sim
+                          for bk in by_bk if bk is not None})
+        series = []  # (si, cfg, bk, pts)
+        for si, cfg, by_bk in per_sim:
+            for bk in sorted(by_bk, key=lambda b: (b is not None, b)):
+                series.append((si, cfg, bk, by_bk[bk]))
+        offs = (np.linspace(-0.03, 0.03, len(series))
+                if len(series) > 1 else [0.0])
+        for k, (si, cfg, bk, pts) in enumerate(series):
+            xs = [p[0] + offs[k] for p in pts]
+            lab = cfg['label'] + ('' if bk is None else fr' ($k_B\!<\!{bk:g}$)')
             for j, p in enumerate(PARAM_IDXS):
                 perc = np.array([pt[1][j] for pt in pts])
-                axs[j].errorbar(
+                axs[r, j].errorbar(
                     xs, perc[:, 0],
                     yerr=[perc[:, 0] - perc[:, 1], perc[:, 2] - perc[:, 0]],
-                    label=f"{simple(s)} ({cfg['label']})", color=f'C{g}',
-                    marker=markers[g % len(markers)],
-                    linestyle=linestyles[si % len(linestyles)], capsize=3)
-                axs[j].set(xlabel=r'$k_{\max}^{P}\ [h/\mathrm{Mpc}]$',
-                           ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
-                           ylim=(0, None))
-                axs[j].grid(True)
+                    label=lab, color=f'C{si}',
+                    marker=_bk_marker(bk, bk_vals),
+                    linestyle=_SIM_LINESTYLES[si % len(_SIM_LINESTYLES)],
+                    capsize=3)
+        for j, p in enumerate(PARAM_IDXS):
+            ylabel = fr'$\Delta {PARAM_NAMES[p]}$'
+            if j == 0:
+                ylabel = f'{simple(s)}\n' + ylabel
+            axs[r, j].set(ylabel=ylabel, ylim=(0, None))
+            axs[r, j].grid(True)
+            if r == nrows - 1:
+                axs[r, j].set_xlabel(r'$k_{\max}^{P}\ [h/\mathrm{Mpc}]$')
+        axs[r, 1].legend(fontsize=7, loc='upper right')
 
-    axs[1].legend(fontsize=8, loc='upper right', ncol=1)
     f.suptitle(title)
     plt.tight_layout()
     fpath = join(figdir, fname)

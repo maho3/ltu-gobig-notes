@@ -129,12 +129,21 @@ def pk_kmax(kmax):
     return resolve_kmax(kmax, 'zPk0')
 
 
+def _label_key_order(key):
+    """Order mapping keys for labels: power-spectrum family first, rest A-Z."""
+    return (0 if 'Pk' in key else 1, key)
+
+
 def kcut_label(kmin, kmax, multiline=True):
-    """Short human-readable label for a k-cut, for plot titles/ticks."""
+    """Short human-readable label for a k-cut, for plot titles/ticks.
+
+    Mapping cuts list the power-spectrum family first, e.g.
+    'zPk<0.4, zBk<0.2'."""
     if not is_mapping(kmax):
         return f'k<{kmax:g}'
     sep = '\n' if multiline else ', '
-    return sep.join(f'{k}<{kmax[k]:g}' for k in sorted(kmax))
+    keys = sorted(kmax, key=_label_key_order)
+    return sep.join(f'{k}<{kmax[k]:g}' for k in keys)
 
 
 # ── discovery ──────────────────────────────────────────────────────────────────

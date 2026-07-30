@@ -19,6 +19,7 @@ Figures are saved to FIG_DIR.
 import argparse
 import os
 import sys
+from collections import defaultdict
 from os.path import join, exists, dirname, abspath
 
 import matplotlib as mpl
@@ -28,7 +29,7 @@ from tqdm import tqdm
 
 sys.path.insert(0, dirname(abspath(__file__)))
 from kcut_utils import (  # noqa: E402
-    discover_summaries, discover_kcuts, kcut_label, simple)
+    discover_summaries, discover_kcuts, pk_kmax, kcut_label, simple)
 
 _STYLE = join(dirname(abspath(__file__)), 'style.mcstyle')
 try:
@@ -131,13 +132,48 @@ SUMMARY_NAMES = discover_summaries(BASEDIR)
 # per summary: ordered list of (kcut_dirname, kmin, kmax)
 KCUTS = {s: discover_kcuts(join(BASEDIR, s)) for s in SUMMARY_NAMES}
 SUMMARY_NAMES = [s for s in SUMMARY_NAMES if KCUTS[s]]
-NCOLS = max((len(KCUTS[s]) for s in SUMMARY_NAMES), default=0)
 
 if not SUMMARY_NAMES:
     print(f'No summaries with k-cuts found under {BASEDIR}')
     sys.exit(0)
 
-print(f'Discovered {len(SUMMARY_NAMES)} summaries, up to {NCOLS} k-cuts each.')
+# Column layout: group columns by Pk cut so the Pk kmax aligns vertically across
+# rows. Within a Pk group, one sub-column per k-cut (ordered by Bk cut, since
+# KCUTS is granularity-sorted). Rows with fewer cuts at a given Pk (e.g. no Bk
+# variants) leave the extra sub-columns blank, so every column holds a single
+# Pk cut. COL_OF[s] maps a column index to that summary's k-cut for that column.
+_pk_slots = {}                 # Pk cut -> max number of k-cuts at that Pk
+_row_by_pk = {}                # summary -> {Pk cut: [(kcut, kmin, kmax), ...]}
+for s in SUMMARY_NAMES:
+    by_pk = defaultdict(list)
+    for kcut, kmin, kmax in KCUTS[s]:
+        by_pk[pk_kmax(kmax)].append((kcut, kmin, kmax))
+    _row_by_pk[s] = by_pk
+    for pk, lst in by_pk.items():
+        _pk_slots[pk] = max(_pk_slots.get(pk, 0), len(lst))
+
+_col_base, _c = {}, 0
+for pk in sorted(_pk_slots):
+    _col_base[pk] = _c
+    _c += _pk_slots[pk]
+NCOLS = _c
+
+COL_OF = {}                    # summary -> {col index: (kcut, kmin, kmax)}
+for s in SUMMARY_NAMES:
+    m = {}
+    for pk, lst in _row_by_pk[s].items():
+        for i, item in enumerate(lst):
+            m[_col_base[pk] + i] = item
+    COL_OF[s] = m
+
+# For labelling: first present column per row, and lowest present row per column.
+FIRST_COL = {s: min(COL_OF[s]) for s in SUMMARY_NAMES}
+LAST_ROW_OF_COL = {}
+for r, s in enumerate(SUMMARY_NAMES):
+    for c in COL_OF[s]:
+        LAST_ROW_OF_COL[c] = r
+
+print(f'Discovered {len(SUMMARY_NAMES)} summaries; {NCOLS} Pk-aligned columns.')
 
 # ---------------------------------------------------------------------------
 # Build cache once: (summary, kcut) -> {p: heatmap} or None
@@ -162,13 +198,13 @@ for p_idx in PARAM_IDXS:
                             squeeze=False)
     im = None
     for r, s in enumerate(SUMMARY_NAMES):
-        kcuts = KCUTS[s]
+        colmap = COL_OF[s]
         for c in range(NCOLS):
             ax = axs[r, c]
-            if c >= len(kcuts):
+            if c not in colmap:
                 ax.set_visible(False)
                 continue
-            kcut, kmin, kmax = kcuts[c]
+            kcut, kmin, kmax = colmap[c]
             res = cache.get((s, kcut))
             hm = res[p_idx] if (res is not None and p_idx in res) else None
 
@@ -188,10 +224,10 @@ for p_idx in PARAM_IDXS:
                                    fontsize=7)
 
             ax.set_title(kcut_label(kmin, kmax, multiline=False), fontsize=8)
-            if c == 0:
+            if c == FIRST_COL[s]:
                 ax.set_ylabel(simple(s) + '\n' + r'$\sigma_{\rm tran}$',
                               fontsize=9)
-            if r == nrows - 1:
+            if r == LAST_ROW_OF_COL[c]:
                 ax.set_xlabel(r'$\sigma_{\rm rad}$', fontsize=9)
 
     if im is not None:

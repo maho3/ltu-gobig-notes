@@ -25,7 +25,8 @@ import pandas as pd
 from os.path import join, dirname, abspath
 
 sys.path.insert(0, dirname(abspath(__file__)))
-from kcut_utils import discover_summaries, discover_kcuts, kcut_label  # noqa: E402
+from kcut_utils import (  # noqa: E402
+    discover_summaries, discover_kcuts, pk_kmax, kcut_label)
 
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
@@ -423,10 +424,11 @@ def plot_lcdm_z_heatmap(z_per_noise, noises, s, kstr, figdir):
 def plot_global_z_heatmap(results, kcuts_by_summary, noises, figroot):
     """Global multi-panel z-score heatmap: rows=summaries, cols=k-cuts.
 
-    Each row keeps its own k-cuts, ordered left-to-right by increasing
-    granularity; columns are therefore not shared across rows and each cell is
-    titled with its own k-cut. Each cell is the noise-grid heatmap of mean LCDM
-    Mnu=0 z-score, with a black contour at z=2.
+    Columns are grouped by Pk cut so the Pk kmax aligns vertically across rows.
+    Within a Pk group, one sub-column per k-cut (ordered by Bk cut); rows with
+    fewer cuts at a given Pk (e.g. no Bk variants) leave the extra sub-columns
+    blank, so every column holds a single Pk cut. Each cell is the noise-grid
+    heatmap of mean LCDM Mnu=0 z-score, with a black contour at z=2.
     """
     _, rad_vals, tran_vals = _noise_pivot(noises, np.zeros(len(noises)))
     present_summ = [s for s, kcuts in kcuts_by_summary.items()
@@ -434,9 +436,34 @@ def plot_global_z_heatmap(results, kcuts_by_summary, noises, figroot):
     if not present_summ:
         return
 
-    n_s = len(present_summ)
-    n_k = max(len(kcuts_by_summary[s]) for s in present_summ)
+    # Pk-aligned column layout (see noise_calibration_all.py for the same
+    # scheme): group columns by Pk cut, one sub-column per Bk variant.
+    pk_slots, row_by_pk = {}, {}
+    for s in present_summ:
+        by_pk = {}
+        for kc in kcuts_by_summary[s]:
+            if (s, kc[0]) not in results:
+                continue
+            by_pk.setdefault(pk_kmax(kc[2]), []).append(kc)
+        row_by_pk[s] = by_pk
+        for pk, lst in by_pk.items():
+            pk_slots[pk] = max(pk_slots.get(pk, 0), len(lst))
 
+    col_base, c = {}, 0
+    for pk in sorted(pk_slots):
+        col_base[pk] = c
+        c += pk_slots[pk]
+    n_k = c
+
+    col_of = {}  # summary -> {col index: (kcut, kmin, kmax)}
+    for s in present_summ:
+        m = {}
+        for pk, lst in row_by_pk[s].items():
+            for i, kc in enumerate(lst):
+                m[col_base[pk] + i] = kc
+        col_of[s] = m
+
+    n_s = len(present_summ)
     fig, axs = plt.subplots(n_s, n_k,
                              figsize=(max(2.0, len(tran_vals) * 0.45 + 0.5) * n_k,
                                       max(1.7, len(rad_vals)  * 0.45 + 0.7) * n_s),
@@ -444,22 +471,19 @@ def plot_global_z_heatmap(results, kcuts_by_summary, noises, figroot):
 
     vmax = 4.0
     for i, s in enumerate(present_summ):
-        kcuts = kcuts_by_summary[s]
+        colmap = col_of[s]
+        first_col = min(colmap) if colmap else 0
         short = s.replace('zPk0+zPk2+zPk4', 'zPk024')
         for j in range(n_k):
             ax = axs[i, j]
-            if j >= len(kcuts):
+            if j not in colmap:
                 ax.axis('off')
                 continue
-            kcut, kmin, kmax = kcuts[j]
-            key = (s, kcut)
-            if key not in results:
-                ax.axis('off')
-                continue
-            grid, _, _ = _noise_pivot(noises, results[key])
+            kcut, kmin, kmax = colmap[j]
+            grid, _, _ = _noise_pivot(noises, results[(s, kcut)])
             _draw_z_heatmap(ax, grid, rad_vals, tran_vals, vmax=vmax)
             ax.set_title(kcut_label(kmin, kmax, multiline=False), fontsize=8)
-            if j == 0:
+            if j == first_col:
                 ax.set_ylabel(short, fontsize=8)
             ax.set_xticks([])
             ax.set_yticks([])
