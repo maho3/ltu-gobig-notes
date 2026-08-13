@@ -323,22 +323,94 @@ ways:
  
 ### 4. Miscellaneous
  
-**Setup**: A free-form experiment where the user has already written a draft `update.md` brain-dump and placed figures in `figures/`. Your job is to formalize and polish the draft, linking figures to findings. There are no fixed figure names or analysis passes — work from what is present.
+**Setup**: A free-form experiment — anything that is not an OOD, self-consistent,
+or Abacus run. Sanity checks of one suite against another, code/backend
+comparisons, lightcone geometry checks, regression tests on a data vector,
+one-off investigations. There are no fixed figure names, no `config.md`, and no
+analysis passes — work from what is present.
+
+**A draft is optional.** The user may have written a draft `update.md`
+brain-dump, or may have only dropped figures in `figures/` and described the
+experiment in conversation. Do not ask for an outline; if there is no draft,
+write `update.md` from the figures plus whatever the user said, following the
+house style below. If there is a draft, formalize it under the preserve-intent
+rule.
  
 ---
  
 #### Miscellaneous — execution order
  
-1. Read the draft `update.md` in the experiment directory
-2. Scan `figures/` → list all available figures
+1. Read the draft `update.md` if one exists; otherwise take the setup from the
+   conversation, the directory name, and any script/job files in the experiment dir
+2. Scan `figures/` → list all available figures (recursively; some misc
+   experiments nest subdirectories)
 3. Read every figure
-4. Rewrite `update.md` per the editing rules below
-5. Add a row to `experiments/README.md` with: Date, Type, Notes, relative link to update
+4. Write `update.md` per the house style and editing rules below
+5. Add a row to `experiments/README.md` with: Date, Type (`Misc`), Train, Test,
+   Notes, relative link to update — insert in ascending date order. Use `—` for
+   Train/Test when the experiment has no train/test structure (e.g. a backend
+   comparison). Notes is a single line: name the checks performed and the
+   headline numbers, semicolon-separated
 ---
+ 
+#### House style (what a misc update looks like)
+
+**Default form** — an observational check producing a list of findings. This is
+the common case; follow `2026-07-23_sanity_fastpm_mtnglike/update.md` or
+`2026-07-09_sanity_nbody_vs_fastpm_L3000/update.md`:
+
+```markdown
+# Sanity check: <what was compared, in words, not the directory name>
+
+**Date**: YYYY-MM-DD
+**Type**: Miscellaneous / <flavor, e.g. sanity>
+**Suite**: <catalogs/suites compared, with box size, lhid, scale factor or z, and which is the reference>
+**Notes**: <optional: data paths, missing sims, binning, anything a reader needs to trust the numbers>
+
+---
+
+## Overview
+
+- <finding, with numbers and the range over which it holds>
+
+![Caption](figures/<name>.jpg)
+
+- <next finding>
+
+...
+
+## Additional figures
+
+- <one-sentence caption for a figure no finding referenced>
+
+![Caption](figures/<name>.jpg)
+```
+
+**Long form** — a methodological or decision-oriented study, where the point is
+a recommendation rather than a set of observations. Follow
+`2026-07-13_pylians_pypower_check/update.md`: a `**TL;DR:**` paragraph stating
+the conclusion up front, a `## Setup` section, topical sections with markdown
+tables for quantitative comparisons, then `## Recommendation` and `##
+Reproducing` (the exact commands and output paths). Use this only when the
+experiment ends in a choice to be made; otherwise use the default form.
+
+**Writing the bullets**:
+- One finding per bullet, in plain scientific prose. State the quantity, the
+  direction, the number, and the range over which it holds — "the ratio sits at
+  ~0.85–1.0 across the bulk of the mass range, with a dip to ~0.6 around
+  M ~ 1.5×10^15 Msun/h", not "the HMF agrees reasonably well"
+- Quote actual values read off the figures: ratios, medians, rms, counts, R²,
+  k and mass ranges, number of objects. Approximate is fine (`~`, `±`), vague is not
+- Say where a trend breaks down and name the regime (low-k mode counts,
+  high-mass tail counts, near-Nyquist, noise-dominated multipoles) as a
+  description of where the numbers get unreliable — not as a physical explanation
+- Keep the general repo rules: describe only what the figures show, no causal
+  mechanisms, no physics conclusions beyond the figures, no invented findings
+- Note missing or unreadable figures explicitly rather than skipping them
  
 #### Editing rules
  
-**Preserve intent**: do not change the substance of the user's findings. Every claim in the draft must survive into the final version. You may reorder, tighten, and clarify, but do not drop findings or add new ones not present in the draft.
+**Preserve intent** (when a draft exists): do not change the substance of the user's findings. Every claim in the draft must survive into the final version. You may reorder, tighten, and clarify, but do not drop findings or add new ones not present in the draft.
  
 **Formalize prose**:
 - Rewrite in plain scientific prose: concise, no filler, no em-dashes
@@ -346,10 +418,14 @@ ways:
 - Remove hedging language that isn't scientifically warranted ("seems like", "maybe", "I think")
 - Preserve hedging that reflects genuine uncertainty ("suggests", "consistent with")
 **Link figures to findings**:
-- For each finding in the draft, identify which figure(s) in `figures/` best support it
-- Embed those figures inline adjacent to the finding they support
+- For each finding, identify which figure(s) in `figures/` best support it
+- Embed those figures inline adjacent to the finding they support, as
+  `![Caption](figures/<name>)`. Use `<img width="900" src="figures/<name>" />`
+  instead when a wide multi-panel figure needs an explicit width
 - If a finding has no supporting figure, leave it as text only — do not invent a figure link
-- If a figure exists but is not referenced in the draft, append it at the end under a section called `## Additional figures` with a one-sentence caption describing what it shows
+- Every figure in `figures/` must appear somewhere in the update. Any figure not
+  attached to a finding goes at the end under `## Additional figures` with a
+  one-sentence caption describing what it shows
 **Format**:
 - Findings go in a single flat bullet list under `## Overview`
 - No per-finding subsections or subtitles within bullets
