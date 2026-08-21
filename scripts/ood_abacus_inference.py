@@ -126,6 +126,13 @@ def load_data(basedir, testdir, s, kstr, cosm_table_path):
 
     masks = _cosm_classes(cosm_table_path, ids)
 
+    n_test = theta.shape[0]
+    if not (ids.shape[0] == noiseidx.shape[0] == percs.shape[1] == n_test):
+        raise ValueError(
+            f'inconsistent test-set size in {join(testdir, s, kstr)}: '
+            f'theta={n_test}, ids={ids.shape[0]}, noiseidx={noiseidx.shape[0]}, '
+            f'percs={percs.shape[1]}')
+
     return (theta, noiseidx, ids, samples, percs,
             theta_self, samples_self, percs_self, masks)
 
@@ -534,6 +541,9 @@ def run(basedir, testdir, noises_path, cosm_table_path, figroot=None):
                     basedir, testdir, s, kstr, cosm_table_path)
             except FileNotFoundError as e:
                 print(f'  SKIP (missing file): {e}')
+                continue
+            except (EOFError, ValueError, OSError) as e:
+                print(f'  SKIP (unreadable, corrupted, or inconsistent data): {e}')
                 continue
 
             # Only create the output directory once data is confirmed to exist

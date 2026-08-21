@@ -13,7 +13,7 @@
 TYPE=self
 
 # Training suite
-TRAIN_NBODY=quijotelike
+TRAIN_NBODY=abacuslike
 TRAIN_SIM=fastpm_charm7
 TRACER=galaxy
 

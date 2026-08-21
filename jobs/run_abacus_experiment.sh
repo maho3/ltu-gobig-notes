@@ -12,12 +12,12 @@
 
 # Training suite
 TRAIN_NBODY=abacuslike
-TRAIN_SIM=fastpm_charm6_comp
+TRAIN_SIM=fastpm_charm7
 TRACER=galaxy
 
 # Abacus test suite
 TEST_NBODY=abacus
-TEST_SIM=custom_comp_gridnoise
+TEST_SIM=nbody_comp_gridnoise
 
 # Working directory containing all suite data
 WDIR=/work/hdd/bdne/maho3/cmass-ili
