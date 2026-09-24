@@ -13,9 +13,15 @@
 TYPE=self
 
 # Training suite
-TRAIN_NBODY=abacuslike
+TRAIN_NBODY=mtnglike
 TRAIN_SIM=fastpm_charm7
-TRACER=galaxy
+TRACER=mtng_lightcone
+
+# Fiducial-point nbar band [h/Mpc]^-3 used by the self-consistent sweeps.
+# Cubic-box tracers sit around 1e-4..5e-4; the mtng_lightcone tracer's nbar
+# range is an order of magnitude lower, so it needs 1e-5..1e-4.
+NBAR_LO=1e-5
+NBAR_HI=1e-4
 
 # Test suite (OOD only; ignored for TYPE=self)
 TEST_NBODY=quijote
@@ -41,7 +47,7 @@ DATE=$(date +%Y-%m-%d)
 if [ "$TYPE" = "ood" ]; then
     EXPNAME="${DATE}_ood_${TRAIN_NBODY}-${TRAIN_SIM}_${TEST_NBODY}-${TEST_SIM}"
 else
-    EXPNAME="${DATE}_self_${TRAIN_NBODY}-${TRAIN_SIM}"
+    EXPNAME="${DATE}_self_${TRAIN_NBODY}-${TRAIN_SIM}_${TRACER}"
 fi
 
 EXPDIR=$REPO/experiments/$EXPNAME
@@ -67,9 +73,10 @@ cat > "$EXPDIR/config.md" <<EOF
 **Script**: model_scaling_diagnostics.py
 **Suite**: $TRAIN_NBODY/$TRAIN_SIM
 **Tracer**: $TRACER
-**kmax sweep summary**: zPk0+zPk2+zPk4 (its k-cuts auto-discovered)
-**Feature sweep reference kmax**: 0.4 (per-summary k-cut with closest zPk kmax)
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**kmax sweep summary**: Pk0+Pk2+Pk4 (prefix auto-detected from the model tree; its k-cuts auto-discovered)
+**Feature sweep reference kmax**: 0.4 (per-summary k-cut with closest Pk kmax)
+**Feature sweep summaries**: Pk0, Pk0+Pk2+Pk4, Pk0+Pk2+Pk4+EqBk0, Pk0+Pk2+Pk4+SqBk0, Pk0+Pk2+Pk4+Bk0 (with the tree's z-prefix where it has one)
+**Fiducial nbar band**: $NBAR_LO to $NBAR_HI
 **Notes**: $NOTES
 EOF
 fi
@@ -110,6 +117,8 @@ else
         --nbody "$TRAIN_NBODY" \
         --sim "$TRAIN_SIM" \
         --tracer "$TRACER" \
+        --nbar-lo "$NBAR_LO" \
+        --nbar-hi "$NBAR_HI" \
         --outdir "$FIGDIR/model_scaling"
 fi
 

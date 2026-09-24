@@ -27,7 +27,9 @@ import sys
 from os.path import join, dirname, abspath
 
 sys.path.insert(0, dirname(abspath(__file__)))
-from kcut_utils import discover_kcuts, kcut_label, simple  # noqa: E402
+from kcut_utils import (  # noqa: E402
+    discover_kcuts, granularity, kcut_label, pk_kmax, simple)
+import model_scaling_diagnostics as MSD  # noqa: E402
 from model_scaling_diagnostics import (  # noqa: E402
     summary_dir, fiducial_stdev, PARAM_IDXS, PARAM_NAMES)
 
@@ -39,13 +41,23 @@ _DEFAULT_TRACER = 'galaxy'
 # Suites to compare. L is the box side length in Mpc/h; volume is (L/1000)^3
 # in (Gpc/h)^3. Suites must share the same k-cut grid (same pipeline `sim`).
 SUITES = [
-    {'nbody': 'quijotelike', 'sim': 'fastpm_charm7',
+    {'nbody': 'quijotelike', 'sim': 'fastpm_charm7_cosmoHOD',
      'label': 'quijotelike (L=1 Gpc/h)', 'L': 1000},
-    {'nbody': 'abacuslike', 'sim': 'fastpm_charm7',
+    {'nbody': 'abacuslike', 'sim': 'fastpm_charm7_cosmoHOD',
      'label': 'abacuslike (L=2 Gpc/h)', 'L': 2000},
+    {'nbody': 'mtnglike', 'sim': 'fastpm_charm7',
+     'label': 'mtnglike (L=3 Gpc/h)', 'L': 3000},
 ]
 
-SUMMARIES = ['zPk0', 'zPk0+zPk2+zPk4']
+SUMMARIES = ['zPk0', 'zPk0+zPk2+zPk4', 'zPk0+zPk2+zPk4+zEqBk0',
+             'zPk0+zPk2+zPk4+zSqBk0', 'zPk0+zPk2+zPk4+zBk0']
+
+# Reference power-spectrum kmax for the all-summary overlay figure.
+REF_KMAX = 0.4
+
+# Marker/colour per summary in the overlay figure.
+_SUMMARY_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+_SUMMARY_MARKERS = ['o', 's', '^', 'D', 'v']
 
 matplotlib.use('Agg')
 matplotlib.rcParams.update({
@@ -63,6 +75,13 @@ def _parse_args():
     p.add_argument('--wdir', default=_DEFAULT_WDIR)
     p.add_argument('--tracer', default=_DEFAULT_TRACER)
     p.add_argument('--outdir', default=None)
+    p.add_argument('--ref-kmax', type=float, default=REF_KMAX,
+                   help='Power-spectrum kmax held fixed in the all-summary '
+                        'overlay figure (default 0.4).')
+    p.add_argument('--nbar-lo', type=float, default=1.0e-4,
+                   help='Lower edge of the fiducial-point nbar band.')
+    p.add_argument('--nbar-hi', type=float, default=5.0e-4,
+                   help='Upper edge of the fiducial-point nbar band.')
     return p.parse_args()
 
 
@@ -160,14 +179,124 @@ def plot_volume_scaling(suites, summary, tracer, wdir, outdir):
     print(f'  Saved {fpath}')
 
 
-def run(suites, summaries, tracer, wdir, outdir=None):
+def select_shared_kcut(suites, summary, tracer, wdir, ref_kmax):
+    """Shared k-cut whose power-spectrum kmax is closest to ``ref_kmax``.
+
+    Ties break toward the lower-granularity cut (smaller bispectrum kmax), so a
+    summary with both zBk<0.2 and zBk<0.4 at the same zPk cut resolves
+    deterministically. Returns ``(dirname, kmin, kmax)`` or None.
+    """
+    kcuts = shared_kcuts(suites, summary, tracer, wdir)
+    if not kcuts:
+        return None
+    return min(kcuts, key=lambda t: (abs(pk_kmax(t[2]) - ref_kmax),
+                                     granularity(t[1], t[2])))
+
+
+def _slope(xs, ys):
+    """Log-log slope of ys vs xs (least squares for >2 points, secant for 2)."""
+    logx, logy = np.log(xs), np.log(ys)
+    if len(xs) > 2:
+        return float(np.polyfit(logx, logy, 1)[0])
+    return float((logy[-1] - logy[0]) / (logx[-1] - logx[0]))
+
+
+def plot_volume_scaling_summaries(suites, summaries, tracer, wdir, outdir,
+                                  ref_kmax=REF_KMAX,
+                                  fname='all_summaries_volume_scaling.jpg'):
+    """Constraining power vs volume for every summary at one reference kmax.
+
+    Volume on x, posterior stdev on y, both log, one line per summary across
+    the box-size ladder. This is the direct read of how much each summary gains
+    from a bigger box, against the V^-1/2 expectation.
+    """
+    # Gather one (x, stdev-array) series per summary, all at the same Pk cut.
+    series = []  # (summary, klabel, xs, [stdev arrays aligned to xs])
+    for summary in summaries:
+        sel = select_shared_kcut(suites, summary, tracer, wdir, ref_kmax)
+        if sel is None:
+            print(f'  SKIP overlay {summary} (no shared k-cut)')
+            continue
+        dname, kmin, kmax = sel
+        xs, sds = [], []
+        for suite in suites:
+            sd = fiducial_stdev(join(summary_dir(
+                suite['nbody'], suite['sim'], tracer, summary, wdir), dname))
+            if sd is None:
+                print(f'  SKIP overlay {summary} @ {suite["label"]} (no data)')
+                continue
+            xs.append(volume(suite['L']))
+            sds.append(sd)
+        if len(xs) < 2:
+            print(f'  SKIP overlay {summary} (fewer than 2 volumes)')
+            continue
+        order = np.argsort(xs)
+        series.append((summary, kcut_label(kmin, kmax, multiline=False),
+                       np.array(xs)[order], [sds[i] for i in order]))
+
+    if not series:
+        print('  SKIP all-summary overlay (no data)')
+        return
+
+    f, axs = plt.subplots(1, 2, figsize=(11, 4.8))
+    for j, p in enumerate(PARAM_IDXS):
+        ax = axs[j]
+        curves = []  # (x, median) for the reference-line anchor
+        for i, (summary, klabel, xs, sds) in enumerate(series):
+            percs = np.array([np.percentile(sd[:, p], [50, 16, 84])
+                              for sd in sds])
+            med = percs[:, 0]
+            yerr = [med - percs[:, 1], percs[:, 2] - med]
+            ax.errorbar(xs, med, yerr=yerr,
+                        color=_SUMMARY_COLORS[i % len(_SUMMARY_COLORS)],
+                        marker=_SUMMARY_MARKERS[i % len(_SUMMARY_MARKERS)],
+                        capsize=4, zorder=3,
+                        label=f'{simple(summary)} [{klabel}]  '
+                              f'slope {_slope(xs, med):+.2f}')
+            curves.append((xs, med))
+
+        # One V^-1/2 guide, anchored to the tightest posterior at the smallest
+        # volume so it sits among the curves rather than above all of them.
+        x0 = min(x[0] for x, _ in curves)
+        y0 = min(m[0] for x, m in curves if x[0] == x0)
+        xlo = min(x.min() for x, _ in curves) * 0.7
+        xhi = max(x.max() for x, _ in curves) * 1.4
+        xref = np.geomspace(xlo, xhi, 50)
+        ax.plot(xref, y0 * (xref / x0) ** -0.5, ls='--', color='gray',
+                zorder=1, label=r'$\propto V^{-1/2}$')
+
+        ax.set(xscale='log', yscale='log',
+               xlabel=r'Volume $[(\mathrm{Gpc}/h)^3]$',
+               ylabel=fr'$\Delta {PARAM_NAMES[p]}$')
+        ax.grid(True, which='both', alpha=0.3)
+        ax.legend(fontsize=7, loc='best')
+
+    labels_str = ' vs '.join(s['label'] for s in suites)
+    f.suptitle(f'{labels_str}\nConstraining power vs volume at '
+               fr'$k_{{\max}}^{{P}}\approx{ref_kmax:g}$')
+    plt.tight_layout()
+    fpath = join(outdir, fname)
+    f.savefig(fpath, dpi=100, bbox_inches='tight')
+    plt.close(f)
+    print(f'  Saved {fpath}')
+
+
+def run(suites, summaries, tracer, wdir, outdir=None,
+        ref_kmax=REF_KMAX):
     if outdir is None:
         outdir = join(dirname(abspath(__file__)), 'figures', 'volume_scaling')
     os.makedirs(outdir, exist_ok=True)
+    plot_volume_scaling_summaries(suites, summaries, tracer, wdir, outdir,
+                                  ref_kmax=ref_kmax)
     for summary in summaries:
         plot_volume_scaling(suites, summary, tracer, wdir, outdir)
 
 
 if __name__ == '__main__':
     _args = _parse_args()
-    run(SUITES, SUMMARIES, _args.tracer, _args.wdir, _args.outdir)
+    # fiducial_stdev reads this band from the model_scaling_diagnostics module.
+    MSD.NBAR_LO = np.log10(_args.nbar_lo)
+    MSD.NBAR_HI = np.log10(_args.nbar_hi)
+    print(f'Fiducial nbar band: [{_args.nbar_lo:.1e}, {_args.nbar_hi:.1e}]')
+    run(SUITES, SUMMARIES, _args.tracer, _args.wdir, _args.outdir,
+        ref_kmax=_args.ref_kmax)

@@ -32,7 +32,8 @@ from os.path import join, exists, dirname, abspath
 
 sys.path.insert(0, dirname(abspath(__file__)))
 from kcut_utils import (  # noqa: E402
-    discover_kcuts, select_kcut, pk_kmax, resolve_kmax, kcut_label, simple)
+    discover_kcuts, discover_summaries, select_kcut, pk_kmax, bk_kmax,
+    kcut_label, simple)
 
 # ── Configuration (defaults; overridden by CLI args) ──────────────────────────
 
@@ -59,22 +60,55 @@ def _parse_args():
                    help='Legend label for --sim (multisim mode). Defaults to --sim value.')
     p.add_argument('--label2', default=None,
                    help='Legend label for --sim2 (multisim mode). Defaults to --sim2 value.')
+    p.add_argument('--nbody2', default=None,
+                   help='nbody suite for --sim2. Defaults to --nbody (same suite).')
+    p.add_argument('--sim3', default=None,
+                   help='Optional third model dir for multisim mode.')
+    p.add_argument('--nbody3', default=None,
+                   help='nbody suite for --sim3. Defaults to --nbody.')
+    p.add_argument('--label3', default=None,
+                   help='Legend label for --sim3. Defaults to --sim3 value.')
+    p.add_argument('--nbar-lo', type=float, default=1.0e-4,
+                   help='Lower edge of the nbar band used to select fiducial '
+                        'test points. Lightcone tracers need a lower band than '
+                        'cubic boxes (default 1e-4, suits cubic boxes).')
+    p.add_argument('--nbar-hi', type=float, default=5.0e-4,
+                   help='Upper edge of the nbar band (default 5e-4).')
     return p.parse_args()
 
-
-# kmax sweep: fix one summary, sweep its k-cuts (discovered from disk)
-KMAX_SUMMARY = f'{Z}Pk0+{Z}Pk2+{Z}Pk4'
 
 # feature sweep: fix a reference power-spectrum kmax, vary summary complexity.
 # For each summary the k-cut whose Pk kmax is closest to FEAT_KMAX is used.
 FEAT_KMAX = 0.4
-FEAT_SUMMARIES = [
-    f'{Z}Pk0',
-    f'{Z}Pk0+{Z}Pk2+{Z}Pk4',
-    f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}EqBk0',
-    f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}SqBk0',
-    f'{Z}Pk0+{Z}Pk2+{Z}Pk4+{Z}Bk0',
+
+# Summary names carry a redshift-space prefix in cubic-box model trees
+# (zPk0, zBk0) but not in lightcone trees (Pk0, Bk0), so the sweep lists are
+# built from whatever prefix the tree on disk actually uses.
+_SUMMARY_TEMPLATE = [
+    '{z}Pk0',
+    '{z}Pk0+{z}Pk2+{z}Pk4',
+    '{z}Pk0+{z}Pk2+{z}Pk4+{z}EqBk0',
+    '{z}Pk0+{z}Pk2+{z}Pk4+{z}SqBk0',
+    '{z}Pk0+{z}Pk2+{z}Pk4+{z}Bk0',
 ]
+
+
+def detect_prefix(models_tracer_dir):
+    """Return 'z' or '' depending on how this model tree names its summaries."""
+    for s in discover_summaries(models_tracer_dir):
+        if s.startswith('zPk'):
+            return 'z'
+        if s.startswith('Pk'):
+            return ''
+    return 'z'
+
+
+def sweep_summaries(models_tracer_dir):
+    """(kmax_summary, feat_summaries) for a tracer's model tree."""
+    z = detect_prefix(models_tracer_dir)
+    feat = [t.format(z=z) for t in _SUMMARY_TEMPLATE]
+    return feat[1], feat
+
 
 # Fiducial cosmology for filtering test points
 THETAFID = np.array([0.3, 0.5, 0.7, 1.0, 0.8])
@@ -320,7 +354,7 @@ def _bk_of(summary, kmax):
     no bispectrum component (so all its cuts form a single Pk series)."""
     if not any(('Bk' in part or 'Qk' in part) for part in summary.split('+')):
         return None
-    return resolve_kmax(kmax, 'zBk0')
+    return bk_kmax(kmax)
 
 
 def _kcut_series(sdir, summary):
@@ -332,8 +366,8 @@ def _kcut_series(sdir, summary):
     series, so experiments that share a Pk kmax but differ in Bk cut stay
     separate and labelled rather than collapsing onto one point."""
     by_bk = {}
-    for dirname, kmin, kmax in discover_kcuts(sdir):
-        stdev = fiducial_stdev(join(sdir, dirname))
+    for kcut_dir, kmin, kmax in discover_kcuts(sdir):
+        stdev = fiducial_stdev(join(sdir, kcut_dir))
         if stdev is None:
             print(f'  SKIP (no data): {join(sdir, dirname)}')
             continue
@@ -560,23 +594,41 @@ def plot_feature_length_scaling_multisim(summaries, ref_kmax, sim_configs, trace
             ax = axs[j]
             for i, (xl, stdev, lab) in enumerate(zip(xlens, stdevs, labels_valid)):
                 perc = np.percentile(stdev[:, p], [50, 16, 84])
+                # Colour encodes the summary, marker shape the sim. A filled /
+                # open split only separates two sims, so beyond that the shape
+                # has to carry it.
                 ax.errorbar(xl + off, perc[0],
                             yerr=[[perc[0] - perc[1]], [perc[2] - perc[0]]],
-                            fmt=markers[i % len(markers)], color=f'C{i}',
-                            markerfacecolor=('none' if si else f'C{i}'),
+                            fmt=markers[si % len(markers)], color=f'C{i}',
                             label=f"{simple(lab)} ({cfg['label']})", capsize=4)
             ax.set(xlabel='Feature vector length',
                    ylabel=fr'$\Delta {PARAM_NAMES[p]}$',
                    ylim=(0, None))
             ax.grid(True)
 
-    axs[1].legend(fontsize=7, loc='upper right', ncol=1)
+    # One entry per (summary, sim) pair overflows an in-axes legend and hides
+    # the data, so it goes underneath the panels instead.
+    handles, labels_ = axs[1].get_legend_handles_labels()
+    f.legend(handles, labels_, fontsize=7, loc='upper center',
+             bbox_to_anchor=(0.5, 0.0), ncol=min(3, len(sim_configs)),
+             frameon=False)
     f.suptitle(title)
     plt.tight_layout()
     fpath = join(figdir, fname)
     f.savefig(fpath, dpi=100, bbox_inches='tight')
     plt.close(f)
     print(f'  Saved {fpath}')
+
+
+def _slug(label):
+    """Filesystem-safe directory name for a legend label.
+
+    Labels are written for humans ('L=1 Gpc/h') but also name output
+    directories, which then appear in markdown image paths, so strip anything
+    that would need escaping there.
+    """
+    keep = [c if (c.isalnum() or c in '.-') else '_' for c in label]
+    return ''.join(keep).strip('_').replace('__', '_')
 
 
 # ── Multi-sim comparison ────────────────────────────────────────────────────────
@@ -602,7 +654,7 @@ def run_multisim(sim_configs, tracer,
             run(wdir=cfg['wdir'], nbody=cfg['nbody'], sim=cfg['sim'],
                 tracer=tracer, kmax_summary=kmax_summary,
                 feat_kmax=feat_kmax, feat_summaries=feat_summaries,
-                figroot=join(figroot, cfg['label']))
+                figroot=join(figroot, _slug(cfg['label'])))
 
     print('\n=== multi-sim comparison ===')
     comp_dir = join(figroot, 'comparison')
@@ -681,19 +733,38 @@ def run(wdir, nbody, sim, tracer,
 
 if __name__ == '__main__':
     _args = _parse_args()
-    if _args.sim2 is not None:
+
+    # The fiducial-point nbar band is a module-level filter used by
+    # fiducial_stdev; override it before any plotting happens.
+    NBAR_LO = np.log10(_args.nbar_lo)
+    NBAR_HI = np.log10(_args.nbar_hi)
+    print(f'Fiducial nbar band: [{_args.nbar_lo:.1e}, {_args.nbar_hi:.1e}]')
+
+    # Summary names are read off the first model tree rather than hardcoded,
+    # so cubic-box (zPk0) and lightcone (Pk0) trees both work.
+    _models = join(_args.wdir, _args.nbody, _args.sim, 'models', _args.tracer)
+    _kmax_summary, _feat_summaries = sweep_summaries(_models)
+    print(f'Summaries: {_feat_summaries}')
+
+    _extra = [(_args.sim2, _args.nbody2, _args.label2),
+              (_args.sim3, _args.nbody3, _args.label3)]
+    _extra = [(sim, nb, lab) for sim, nb, lab in _extra if sim is not None]
+
+    if _extra:
         _sim_configs = [
             {'wdir': _args.wdir, 'nbody': _args.nbody, 'sim': _args.sim,
              'label': _args.label1 or _args.sim},
-            {'wdir': _args.wdir, 'nbody': _args.nbody, 'sim': _args.sim2,
-             'label': _args.label2 or _args.sim2},
         ]
+        for _sim, _nb, _lab in _extra:
+            _sim_configs.append(
+                {'wdir': _args.wdir, 'nbody': _nb or _args.nbody,
+                 'sim': _sim, 'label': _lab or _sim})
         run_multisim(
             sim_configs=_sim_configs,
             tracer=_args.tracer,
-            kmax_summary=KMAX_SUMMARY,
+            kmax_summary=_kmax_summary,
             feat_kmax=FEAT_KMAX,
-            feat_summaries=FEAT_SUMMARIES,
+            feat_summaries=_feat_summaries,
             figroot=_args.outdir,
         )
     else:
@@ -702,8 +773,8 @@ if __name__ == '__main__':
             nbody=_args.nbody,
             sim=_args.sim,
             tracer=_args.tracer,
-            kmax_summary=KMAX_SUMMARY,
+            kmax_summary=_kmax_summary,
             feat_kmax=FEAT_KMAX,
-            feat_summaries=FEAT_SUMMARIES,
+            feat_summaries=_feat_summaries,
             figroot=_args.outdir,
         )

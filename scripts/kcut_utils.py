@@ -120,13 +120,43 @@ def resolve_kmax(kmax, summ):
     for key in _kcut_keys(summ):
         if key in kmax:
             return kmax[key]
-    return next(iter(kmax.values()))
+    # No key matched. Fall back deterministically rather than on dict order.
+    if 'default' in kmax:
+        return kmax['default']
+    return min(kmax.values())
+
+
+def _family_kmax(kmax, suffix):
+    """kmax for the observable family whose key ends in ``suffix`` ('Pk'/'Bk').
+
+    Summary names carry a redshift-space prefix in cubic-box suites (``zPk0``,
+    ``zBk0``) but not in lightcone suites (``Pk0``, ``Bk0``), so the mapping
+    keys differ between model trees. Match on the family suffix instead of a
+    fixed key, otherwise an unprefixed tree silently falls through to the
+    wrong value.
+    """
+    if not is_mapping(kmax):
+        return kmax
+    for key in (f'z{suffix}', suffix):
+        if key in kmax:
+            return kmax[key]
+    for key in sorted(kmax):
+        if key.endswith(suffix):
+            return kmax[key]
+    if 'default' in kmax:
+        return kmax['default']
+    return min(kmax.values())
 
 
 def pk_kmax(kmax):
     """kmax applied to the power-spectrum family (a common numeric axis, since
-    every summary here contains zPk)."""
-    return resolve_kmax(kmax, 'zPk0')
+    every summary here contains a power spectrum)."""
+    return _family_kmax(kmax, 'Pk')
+
+
+def bk_kmax(kmax):
+    """kmax applied to the bispectrum family."""
+    return _family_kmax(kmax, 'Bk')
 
 
 def _label_key_order(key):
@@ -202,11 +232,20 @@ def simple(label):
     if isinstance(label, list):
         return [simple(l) for l in label]
     label = label.replace('nbar', r'$\bar{n}$')
+    # Redshift-space (cubic box) names first, so the unprefixed replacements
+    # below cannot match inside an already-substituted z-name.
     label = label.replace('zPk0+zPk2+zPk4', r'$zP_{0,2,4}$')
     label = label.replace('zPk0', r'$zP_{0}$')
     label = label.replace('zEqBk0', r'$zEqB_{0}$')
     label = label.replace('zSqBk0', r'$zSqB_{0}$')
     label = label.replace('zBk0', r'$zB_{0}$')
     label = label.replace('zQk0', r'$zQ_{0}$')
+    # Lightcone (unprefixed) names.
+    label = label.replace('Pk0+Pk2+Pk4', r'$P_{0,2,4}$')
+    label = label.replace('Pk0', r'$P_{0}$')
+    label = label.replace('EqBk0', r'$EqB_{0}$')
+    label = label.replace('SqBk0', r'$SqB_{0}$')
+    label = label.replace('Bk0', r'$B_{0}$')
+    label = label.replace('Qk0', r'$Q_{0}$')
     label = label.replace('+', ', ')
     return label
