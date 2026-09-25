@@ -71,6 +71,24 @@ residual in units of the 68% half-width.
   all three conditioned blocks: at k=0.4 the pool spans ~1.5 in P2/P0 and
   ~1.6 in P4/P0, against ~0.03 and ~0.04 for the predictive 68% band.
 
+## Formal p-values
+
+Added 2026-09-24 after the matched leave-one-out tests were implemented (see `ltu-cmass/ppc/README.md`). The null hypothesis is that x_obs is a draw from the posterior predictive; p is floored at 1/(N+1) = 0.0099 for N = 100, so a value at the floor means only "more extreme than every draw". Inference blocks reuse x_obs for fitting, so their p is conservative; held-out blocks are a clean test.
+
+<img width="900" src="figures/ppc_pcapvalue.png" />
+
+- In the top-10 PCA space the conditioned vector passes (p = 0.67 ± 0.05, Hotelling p_F = 0.81) but the held-out vector fails (p = 0.020 ± 0.010, p_F = 2.1e-3). All 555 held-out features together, and every held-out block individually, sit at p = 0.0099-0.020 (zBk0, zQk0, zEqBk0, zSqBk0 at the floor; zBk2 and zQk2 at 0.020). Hotelling p_F ranges from 1.3e-3 (zBk2, zQk2) to 5e-11 (zBk0) and 2e-10 (zQk0); it is a Gaussian extrapolation and ranks the failures only.
+- Among the conditioned blocks, zPk0 fails on its own (p = 0.020, p_F = 0.017), while zPk2 (0.96) and zPk4 (0.55) pass. The zPk0 deviation orthogonal to the top-10 PCs is at the floor (0.0099), as are those of zBk0, zQk0, zSqBk0 and the held-out vector as a whole (0.020).
+- The all-feature Ledoit-Wolf test fails the conditioned vector at the floor (p = 0.0099) although the PCA test gives 0.67. x_obs is therefore in a direction the posterior draws do not reach, while lying inside the cloud along the directions they do vary in. Every held-out block is also at 0.0099-0.020 in Ledoit-Wolf.
+- Panel (e) shows the held-out verdicts are not tuned to k = 10: zBk0, zSqBk0 and zEqBk0 are at or near the floor from k ≈ 3 PCs kept, and zBk2/zQk2 from k ≈ 7-9, and they stay there out to k = 30. The zPk0 verdict reaches the floor for k ≥ 11.
+
+<img width="900" src="figures/ppc_kbinpvalue.png" />
+
+- In k-bin subsets the failure builds with kmax in zPk0: the cumulative p is 0.16 at kmax = 0.16, 0.09 at 0.20, and at the floor for every kmax ≥ 0.24. The combined P(k) vector reaches p ≈ 0.07 at kmax = 0.24, ≈ 0.2 at 0.28-0.32 and the floor at 0.36 and 0.40. zPk2 stays at p ≥ 0.9 throughout and zPk4 at p ≥ 0.15.
+- Sliding windows on zPk0 peak at p ≈ 0.02 (0.19 ≤ k < 0.25) and the combined multipoles at p ≈ 0.03 (most OOD window: p = 0.030 ± 0.014); the windowed P(k) tests do not reach the floor, unlike the cumulative ones.
+- The per-bin deviation (x_obs − mean)/σ on zPk0 is −0.5σ to −1σ for k < 0.15, sits at −1.5σ to −2.8σ over 0.16 < k < 0.32 (worst −2.8σ near k = 0.24) and returns to ~−0.5σ at k = 0.4. zPk2 runs +0.5σ to +1.5σ above k = 0.15. zPk4 has isolated bins at −2.0σ (k ≈ 0.1) and −2.4σ (k ≈ 0.19). The sign of zPk0 is that seen in the band figure, the predictive ensemble sitting above x_obs.
+- The bispectra reach the floor at small subsets: zQk0 in the cumulative scan by kmax ≈ 0.15 (13 triangles), zBk0, zEqBk0 and zSqBk0 by kmax = 0.20 (22 triangles, 5 and 10 bins respectively). zBk0 and zQk0 are not tested beyond kmax = 0.3 because d exceeds N/2 = 50. This is consistent with the "systematically high, more consistently than zPk0" reading of the bispectrum bands above.
+
 ## Parameter space
 
 The drawn parameters are direct posterior samples by construction, so these

@@ -324,7 +324,7 @@ ways:
 ### 4. Miscellaneous
  
 **Setup**: A free-form experiment — anything that is not an OOD, self-consistent,
-or Abacus run. Sanity checks of one suite against another, code/backend
+or Abacus run (posterior predictive checks have their own section, 5). Sanity checks of one suite against another, code/backend
 comparisons, lightcone geometry checks, regression tests on a data vector,
 one-off investigations. There are no fixed figure names, no `config.md`, and no
 analysis passes — work from what is present.
@@ -430,3 +430,87 @@ experiment ends in a choice to be made; otherwise use the default form.
 - Findings go in a single flat bullet list under `## Overview`
 - No per-finding subsections or subtitles within bullets
 - Figure blocks follow the bullet they support, not grouped at the end (except `## Additional figures`)
+
+---
+
+### 5. Posterior predictive checks (PPC)
+
+**Setup**: draw parameters from `q(theta | x_obs)` at one test point,
+resimulate each draw through the identical forward chain, and compare the
+resimulated data vectors with the observed one. Pipeline and full p-value
+definitions: `../ltu-cmass/ppc/README.md` (read its "Interpreting the p-values"
+section before writing). Filed as `Misc` in `experiments/README.md`; the title
+says "Posterior predictive check", the Type line is `Miscellaneous / posterior
+predictive check`. There is no `config.md`; take the setup from the README of
+the campaign, `posterior_draws.npz` / `manifest.tsv`, and the conversation.
+
+**Where the outputs are**: `<wdir>/ppc/<suite>_<sim>/<summaries>_<kcut>/[testing/<tsuite>_<tsim>/]<tag>/`
+(locally `../ltu-cmass/data/ppc/...`). Copy the figures into the experiment's
+`figures/`; do not edit them. Copy only the current ones:
+`ppc_bands`, `ppc_corner`, `ppc_logprob`, `ppc_pcapvalue`, `ppc_kbinpvalue`.
+An older `ppc_pvalue.png` / `ppc_pvalues.tsv` (fewer draws, superseded
+implementation) can sit next to them, so check the `N` in the figure title
+and the file times, skip stale ones and say so in Notes. Read the `.tsv`
+tables (`ppc_pcapvalues.tsv`, `ppc_kbinpvalues.tsv`) for exact numbers rather
+than reading them off the plots. Note `N` collected (draws can be dropped, e.g.
+`missing_diag` in the manifest) since it sets the p floor 1/(N+1).
+
+**Header fields**: Train (posterior suite and model, incl. `reparam` if
+trained with `infer.reparam_degeneracy`), Observation (suite, lhid, cosmology
+class, noise), self-consistent vs OOD, N draws collected/requested, Notes.
+
+**Reading the figures**
+
+- `ppc_bands.png`: predictive median and 68/95% bands against x_obs for every
+  block; `[inf]` blocks were conditioned on, held-out blocks were not. Quote
+  the residual (PPC minus observed) with its k range and its size relative to
+  the 68% half-width. Bins within a block are correlated, so fractions of bins
+  outside a band describe the figure and are not a test.
+- `ppc_pcapvalue.png` (PCA space): p per block for PCA (circle), Hotelling
+  (square, Gaussian extrapolation, ranks failures only), Ledoit-Wolf (triangle,
+  all features), and the orthogonal-to-PC residual. PCA and Ledoit-Wolf answer
+  different questions: PCA passing with Ledoit-Wolf failing means x_obs lies in
+  a direction the model cannot reach. Report both for the inference and
+  held-out vectors.
+- `ppc_kbinpvalue.png` (k-bin subsets): which scales (windows) and from which
+  kmax (cumulative) the check fails, plus the per-bin marginal deviation in
+  units of sigma, which gives the sign of the offset. Quote the k range of a
+  run of adjacent low windows or the cumulative kmax at which p drops; do not
+  report one isolated window (about 17 overlapping tests per curve).
+- `ppc_corner.png`, `ppc_logprob.png`: campaign bookkeeping. The draws are
+  posterior samples by construction, so they should overlay the direct samples
+  in all parameters; disagreement means drift between drawing and simulating.
+  The ESS, max-weight and "importance-sampled data" annotations on the logprob
+  plot are inherited and vacuous for an unweighted ensemble; say so once.
+
+**Rules for p-values**
+
+- Small p means x_obs is out of distribution, and the plots show `-log10 p`.
+  p at the floor 1/(N+1) means "more extreme than every draw", not a magnitude.
+  Use p_F only to rank failures beyond the floor, never as the headline.
+- Differences in p below the Monte Carlo error `p_loo_std` (~0.05 near p = 0.5)
+  are not significant.
+- Inference blocks reuse x_obs in fitting, so their p is conservative and a
+  pass is weak. Held-out blocks are the clean test. A model that passes
+  inference blocks and fails held-out blocks reproduces what it was fitted to
+  without capturing the physics behind them (state this as the outcome of the
+  test, not a mechanism).
+- Compare across campaigns only after stating that the observation, suite and
+  N differ. A self-consistent pass is not evidence about an OOD failure, and
+  vice versa; say so when a note follows a different campaign.
+- Absolute signs: (x_obs - mean)/sigma negative means the predictive ensemble
+  sits above x_obs.
+
+**Updating an existing PPC note with new p-value results**: add a
+`## Formal p-values` section (before the parameter-space section) with the two
+p-value figures and 3-5 bullets. Do not change or remove existing findings;
+add a line to the matching `experiments/README.md` row's Notes.
+
+**Write-up**: default form is the 2026-09-22 note (header, Setup or Overview,
+bullets with inline figures, caveats). Use the `**TL;DR:**` long form only if
+the PPC ends in a recommendation. Include a `## Caveats` section when the
+observation or suite differs from a previous PPC being compared. Same
+plain-prose, no-causal-mechanism rules as the other types. Add the
+`experiments/README.md` row (Type `Misc`, Train, Test or `—`, headline
+p-values in Notes).
+

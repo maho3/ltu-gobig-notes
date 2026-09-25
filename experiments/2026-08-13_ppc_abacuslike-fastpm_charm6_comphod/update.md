@@ -77,6 +77,22 @@ figure rather than used as a test):
   upper edge ~0.6 in signed log10 Q0 vs. observed ~0.2-0.25); quantile bands
   describe these two blocks poorly.
 
+## Formal p-values
+
+Added 2026-09-24 after the matched leave-one-out tests were implemented (see `ltu-cmass/ppc/README.md`). Both tests ask whether x_obs is a draw from the posterior predictive; p is floored at 1/(N+1) = 0.0099 for N = 100, so a value at the floor means only "more extreme than every draw". Inference blocks reuse x_obs for fitting, so their p is conservative.
+
+<img width="900" src="figures/ppc_pcapvalue.png" />
+
+- In the top-10 PCA space, x_obs is typical of the draws: p = 0.63 ± 0.05 for the inference vector and 0.71 ± 0.05 for the held-out vector (Hotelling p_F 0.84 and 0.97). Per inference block p = 0.70 (zPk0), 1.00 (zPk2) and 0.38 (zPk4); all held-out blocks lie in 0.76-0.97. No block is below 0.05 in the PCA test.
+- The all-feature Ledoit-Wolf test agrees: p = 0.79 for the inference vector, 0.82 for the held-out vector, and 0.69-1.00 for the individual blocks.
+- The one exception is the deviation orthogonal to the top-10 PCs: zPk0 sits at the floor (p = 0.0099), while zPk2 (0.93), zPk4 (0.35), the inference vector (0.89) and every held-out block (0.52-1.00) are unremarkable.
+
+<img width="900" src="figures/ppc_kbinpvalue.png" />
+
+- In k-bin subsets, no cumulative or windowed test on the combined P(k) vector is below 0.05. The combined curve rises from p ≈ 0.98 at kmax = 0.24 to p ≈ 0.12 at kmax = 0.4 (-log10 p ≈ 0.92), driven by zPk0, whose cumulative p falls from ~0.6 for kmax ≤ 0.24 to ~0.07-0.1 for kmax ≥ 0.28.
+- Individual sliding windows on zPk0 at k = 0.26-0.34 reach p ≈ 0.04-0.05 and the combined multipoles reach p ≈ 0.05 at k ≈ 0.32; the most OOD combined window, 0.29 ≤ k < 0.35, has p = 0.050 ± 0.014. These are isolated windows among ~17 overlapping tests per curve and are consistent with chance.
+- The per-bin deviation of x_obs is within ±0.5σ for zPk0 and zPk4 and +0.2-0.4σ for zPk2 above k = 0.1, with excursions to ±1-2σ at k < 0.08 (largest: zPk4 at k = 0.045, +2.1σ).
+
 ## Parameter-space bookkeeping
 
 Consistency checks on the campaign rather than tests of the model: the
