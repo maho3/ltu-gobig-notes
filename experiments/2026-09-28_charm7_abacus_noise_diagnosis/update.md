@@ -188,6 +188,16 @@ f = 1 recovers a pure isotropic kernel.
 
 **Prediction beforehand.** A mixture would help but not fully: χ²/dof about 2–5 at k < 0.4 and 10–30 at k < 0.6. The reasoning: its |W|² plateaus at (1 − f)² instead of falling to zero like a Gaussian. It is still a blur, however, and cannot remove specific excess pairs.
 
+**What the kernels can do, in theory.** The figure below compares the correction CHARM needs (black: Abacus − CHARM, both noise-free, in the network's features) with what each best-fit kernel (k < 0.4 fit) does to noise-free CHARM. The kernel curves are analytic.
+- Isotropic kernels multiply every multipole by |W|².
+- The anisotropic Gaussian is P(k, μ)·exp[−k²(σ_t² + (σ_r² − σ_t²)μ²)], projected back onto ℓ ≤ 4. At (1.5, 2.26) it reproduces the measured noise grid to better than 10⁻³ in P2/P0.
+
+<img width="900" src="figures/kernel_theory.png" />
+
+- **P0:** the needed suppression grows to −0.16 dex at k ≈ 0.43 and then turns back towards zero. Every kernel suppresses monotonically. A Gaussian keeps falling (−0.35 dex at 0.6), and the mixture's plateau at (1 − f)² only postpones that fall. No displacement kernel can follow the upturn, which is the fingerprint of an excess peaked at the CHARM grid's Nyquist frequency.
+- **P2/P0:** the needed correction is about +0.04, roughly flat over k = 0.15–0.45. Isotropic kernels change P2/P0 only through the shot-noise term in P0, which is negligible below k ≈ 0.25. The anisotropic Gaussian adds only about +0.01 there. All kernels overshoot above 0.45.
+- **P4/P0:** small everywhere; the kernels match it to k ≈ 0.45.
+
 **Result.** χ²/dof against noise-free Abacus, c000, HOD 0 / 1 / 3:
 
 | k_max | Isotropic Gaussian | Gaussian mixture | Yukawa mixture | Anisotropic Gaussian (§2) |
@@ -212,6 +222,14 @@ f = 1 recovers a pure isotropic kernel.
 - The remaining misfit is P2/P0 at −5 to −8σ over k = 0.15–0.3. This is the same quadrupole residual as with no noise at all, because an isotropic kernel multiplies every multipole by the same |W|² and cannot change P2/P0.
 - The anisotropic Gaussian (§2) did better at k < 0.2 only because σ_r ≠ σ_t gives it some leverage on the quadrupole.
 - At k < 0.6 the mixture still leaves P0 +10 to +24σ at k = 0.4–0.5, and its plateau cannot follow the excess there either.
+
+The residuals after each best-fit kernel, in units of the per-box scatter, are shown below. The anisotropic Gaussian here is the empirical noise surface from §2; the other kernels are analytic. The dashed η_c curve is described in the next subsection.
+
+<img width="900" src="figures/kernel_residual.png" />
+
+- **P0 (top):** the mixture (orange) stays within ±2σ to k ≈ 0.35 for HODs 0 and 3, and to about 0.3 for HOD 1. The Gaussians stay +5 to +10σ high over 0.1–0.3 and then overshoot.
+- **P2/P0 (middle):** every kernel leaves the same −5 to −8σ trough over 0.15–0.35, identical to no noise. Kernels differ only above 0.35, where they overshoot.
+- **P4/P0 (bottom):** within ±2σ to about 0.3 for all kernels, apart from +3 to +5σ spikes for HOD 0 at 0.3–0.4.
 
 **Interpretation.**
 1. The P0 part of the CHARM error behaves like "about 15–20% of galaxies misplaced by about half a voxel". That is the right order of magnitude for the doubled cross-voxel pair counts (§1), but this fit does not prove that link.
@@ -252,6 +270,12 @@ f = 1 recovers a pure isotropic kernel.
 | 3 (0.43) | 0.4 | 478 | 404 | 231 | 68 | 22 | 244 | 471 | **13.3** |
 
 - c018 agrees for HODs 0 and 1: same best η_c, and χ² within about 30%. HOD 3 was not run for c018 because the login-node analysis timed out.
+<img width="900" src="figures/etavb.png" />
+
+- **Left and middle:** best χ²/dof over the mixture kernel as a function of η_c; rings mark the true η_c. At k < 0.4 every HOD's minimum sits on its ring. At k < 0.2, HODs 1 and 3 prefer a lower η_c.
+- **Right:** why η_c cannot fix k < 0.4 (HOD 0). The P2/P0 residual after the best mixture (black) is a −6σ trough over 0.15–0.35 that crosses zero at 0.4. Lowering η_c (0.59 → 0.45, purple) moves P2/P0 in the right direction but by +20σ, and the shift stays large out to 0.6. Any η_c shift big enough to fill the trough overshoots above k ≈ 0.25, so the fit keeps η_c at its true value.
+- The dashed purple curves in `kernel_residual.png` show the k < 0.2 joint fit. For HOD 1 (η_c = 0) P2/P0 is fixed below 0.2 but goes to +10 to +30σ by 0.3.
+
 - With η_c alone (no kernel), the fit always moves η_c *up*, to 0.45–0.7. The extra fingers-of-god then damp the high-k P0 excess, but χ² stays at 20–45 at k < 0.2.
 
 **Interpretation.**
@@ -270,7 +294,7 @@ Scripts are in `ltu-cmass/scripts/`, job files in `ltu-cmass/jobs/`. Outputs are
 | NPE probes | `sbatch jobs/slurm_charm_abacus_nnprobe.sh` (`charm_abacus_nnprobe.py`) | `nnprobe/` |
 | Symmetric galaxy voxelization | `sbatch jobs/slurm_charm_abacus_galvox.sh` (`charm_abacus_galvox.py`) | `galvox/` |
 | Aggregation | `python scripts/charm_abacus_analyze.py` | `results.npy` |
-| Figures | `PYTHONPATH=scripts python scripts/charm_abacus_figures.py --out <figures>` | this entry |
+| Figures | `PYTHONPATH=.:scripts python scripts/charm_abacus_figures.py --out <figures> [--figs ...]` (addendum figures: `--figs kernel_theory kernel_resid etavb`, under a minute; they need the kernel and η_c outputs) | this entry |
 | Non-Gaussian kernels (addendum; login node, a few minutes) | `PYTHONPATH=scripts python scripts/charm_abacus_kernels.py --target c000` | `kernels_c000.npy`, `kernels_c018.npy` |
 | η_c response (addendum) | `NPROC=4 sbatch jobs/slurm_charm_abacus_etavb.sh` (144 populations; at 16 workers it exceeds 64 G), then `PYTHONPATH=.:scripts python scripts/charm_abacus_etavb.py analyze --target c000` (about 5 min per HOD) | `etavb/`, `etavb_c000.npy` |
 | Clamped-noise MCMC (cancelled) | `scripts/charm_abacus_fixednoise.py`, `jobs/slurm_charm_abacus_fixednoise.sh` | none |
