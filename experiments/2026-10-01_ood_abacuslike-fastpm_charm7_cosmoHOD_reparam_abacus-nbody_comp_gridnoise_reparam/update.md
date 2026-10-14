@@ -5,7 +5,7 @@
 **Test**: abacus/nbody_comp_gridnoise_reparam
 **Tracer**: galaxy
 **Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0; zPk0+zPk2+zPk4+zEqBk0; zPk0+zPk2+zPk4+zSqBk0
-**kmax**: zPk0 and zPk024: 0.2, 0.4, 0.6 (scalar); zPk024+{zBk0,zEqBk0,zSqBk0}: zBk<0.2 with zPk<0.2/0.4/0.6, and zBk<0.4 with zPk<0.4. The kmax=0.3 models (zPk0, zPk024, zPk024+zBk0 at zPk=zBk=0.3) are still training and are skipped here.
+**kmax**: zPk0 and zPk024: 0.2, 0.3, 0.4, 0.6 (scalar); zPk024+zBk0: zBk<0.2 with zPk<0.2/0.4/0.6, zBk<0.3 with zPk<0.3, and zBk<0.4 with zPk<0.4; zPk024+{zEqBk0,zSqBk0}: as zBk0 without the 0.3 cut. The three kmax=0.3 cells were added on 2026-10-02, after their models finished training (`infer=k03`, Optuna cut short by sqlite lock contention, so ~57-77 completed trials per study against ~170 for the others).
 **Notes**: Models trained with `infer.reparam_degeneracy=True`, i.e. the flow samples (degen_r, degen_phi) in place of (eta_vb_centrals, noise_radial); Ωm and σ8 are unaffected by the reparameterization. The Abacus N-body test suite (same halos and diag files as `nbody_comp_gridnoise`, 5732 rows over 119 lhids × 49 noise configs) was re-preprocessed with `reparam_degeneracy=True`, `val_frac=0`, `test_frac=1` so that theta_test is in the model's coordinates. The comparison "non-reparam" numbers below are the sibling `fastpm_charm7_cosmoHOD` models on `abacus/nbody_comp_gridnoise` (17 of 18 cells; its zPk0 kmax=0.4 cell has no OOD samples). The bias table was computed from the same `posterior_samples.npy` files the figures are built from (script and CSV: `cmass-ili/scratch/reparam_ood_table/`). In every heatmap the x-axis is σ_tran and the y-axis σ_rad, both 0 to 4.51 Mpc/h.
 
 ## Overview
@@ -56,17 +56,35 @@
 
 - At the noise-free row (σ_rad = σ_tran = 0, 9 LCDM Mν=0 points), σ8 is closer to truth at zPk024 kmax 0.4 than when averaged over the noise grid: z = +0.12, against +0.73 over all σ_tran < 4.51. The same holds for the three zPk<0.4, zBk<0.2 bispectrum cells (−0.09 to +0.03). At zPk024 kmax 0.2 it stays at +0.86, and at zPk<0.2, zBk<0.2 at +0.75 to +0.80. This is the noise row used for the 2026-10-01 PPC campaigns.
 
-- The reparameterization does not change cosmology recovery relative to the non-reparam sibling `fastpm_charm7_cosmoHOD`. Cell by cell, the LCDM Mν=0 mean z differs by at most ~0.2 in Ωm and ~0.7 in σ8. The largest σ8 differences are at zPk<0.6 (+zEqBk0 +2.89 vs +2.11; zPk024 +2.90 vs +2.20). Elsewhere, the reparam σ8 z is within ±0.26, slightly higher in most cells: zPk024 kmax 0.2 +1.10 vs +1.02, kmax 0.4 +0.73 vs +0.65. Posterior widths agree to ≲ 0.003 in both parameters.
+- The reparameterization does not change cosmology recovery relative to the non-reparam sibling `fastpm_charm7_cosmoHOD` (which has no kmax=0.3 models, so those rows have no comparison). Cell by cell, the LCDM Mν=0 mean z differs by at most ~0.2 in Ωm and ~0.7 in σ8. The largest σ8 differences are at zPk<0.6 (+zEqBk0 +2.89 vs +2.11; zPk024 +2.90 vs +2.20). Elsewhere, the reparam σ8 z is within ±0.26, slightly higher in most cells: zPk024 kmax 0.2 +1.10 vs +1.02, kmax 0.4 +0.73 vs +0.65. Posterior widths agree to ≲ 0.003 in both parameters.
+
+- The kmax=0.3 cells (added 2026-10-02) sit between their 0.2 and 0.4 neighbours in σ8 and are unbiased in Ωm. Over the LCDM Mν=0 points with σ_tran < 4.51, the mean z is:
+  - zPk0 k<0.3: Ωm +0.18, σ8 +0.36.
+  - zPk024 k<0.3: Ωm +0.03, σ8 +1.04 (Δσ8 = +0.041), close to its k<0.2 value (+1.10) rather than its k<0.4 one (+0.73).
+  - zPk024+zBk0 at zPk<0.3, zBk<0.3: Ωm +0.26, σ8 +0.54.
+  - At the noise-free row these fall to σ8 +0.10, +0.82 and +0.51.
+  - In the global grid, zPk024 k<0.3 stays below z = 2 except a sliver at σ_rad = 4.51, σ_tran ≤ 1.5, where k<0.4 has the large z > 2 band. The zPk<0.3, zBk<0.3 cell is uniformly z ≈ 1–1.5.
+- The kmax=0.3 posteriors on Abacus are wider in Ωm than their neighbours: median std 0.022 for zPk024 and 0.028 for +zBk0, against 0.015–0.017 at kmax 0.2 and 0.4. Their σ8 widths (0.043–0.047) are comparable. These models had roughly a third of the Optuna trials of the others (see the kmax line above), and their self-consistent widths were not compared here.
+
+<table>
+<tr>
+<td><img width="450" src="figures/zPk0_zPk2_zPk4_kmin-0.0_kmax-0.3/scatter_n24.jpg" /></td>
+<td><img width="450" src="figures/zPk0_zPk2_zPk4_kmin-0.0_kmax-0.3/pred_s8.jpg" /></td>
+</tr>
+</table>
 
 | Cell (LCDM Mν=0, σ_tran < 4.51) | z Ωm reparam / non-reparam | z σ8 reparam / non-reparam | std σ8 reparam |
 |---|---|---|---|
 | zPk0 k<0.2 | 0.03 / 0.04 | 0.19 / 0.16 | 0.112 |
+| zPk0 k<0.3 | 0.18 / — | 0.36 / — | 0.109 |
 | zPk0 k<0.4 | 0.19 / — | 0.16 / — | 0.106 |
 | zPk0 k<0.6 | −0.05 / 0.02 | 1.57 / 1.40 | 0.089 |
 | zPk024 k<0.2 | 0.19 / 0.07 | 1.10 / 1.02 | 0.049 |
+| zPk024 k<0.3 | 0.03 / — | 1.04 / — | 0.047 |
 | zPk024 k<0.4 | 0.67 / 0.67 | 0.73 / 0.65 | 0.034 |
 | zPk024 k<0.6 | 0.91 / 0.86 | 2.90 / 2.20 | 0.039 |
 | +zBk0 zPk<0.2, zBk<0.2 | 0.29 / 0.16 | 0.81 / 0.89 | 0.041 |
+| +zBk0 zPk<0.3, zBk<0.3 | 0.26 / — | 0.54 / — | 0.043 |
 | +zBk0 zPk<0.4, zBk<0.2 | 0.53 / 0.55 | 0.24 / 0.25 | 0.031 |
 | +zBk0 zPk<0.4, zBk<0.4 | 0.57 / 0.49 | 0.40 / 0.14 | 0.034 |
 | +zBk0 zPk<0.6, zBk<0.2 | 0.97 / 0.93 | 2.23 / 2.49 | 0.040 |
@@ -97,6 +115,25 @@
 </tr>
 <tr>
 <td><img width="400" src="figures/zPk0_kmin-0.0_kmax-0.2/lcdm_z_heatmap.png" /></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary>zPk0 kmax=0.3</summary>
+
+<table>
+<tr>
+<td><img width="400" src="figures/zPk0_kmin-0.0_kmax-0.3/pred_Om.jpg" /></td>
+<td><img width="400" src="figures/zPk0_kmin-0.0_kmax-0.3/pred_s8.jpg" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/zPk0_kmin-0.0_kmax-0.3/scatter_n24.jpg" /></td>
+<td><img width="400" src="figures/zPk0_kmin-0.0_kmax-0.3/residuals_n24.jpg" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/zPk0_kmin-0.0_kmax-0.3/lcdm_z_heatmap.png" /></td>
 </tr>
 </table>
 
@@ -162,6 +199,23 @@
 </details>
 
 <details>
+<summary>zPk024 kmax=0.3 (scatter and pred_s8 shown above)</summary>
+
+<table>
+<tr>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_kmin-0.0_kmax-0.3/pred_Om.jpg" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_kmin-0.0_kmax-0.3/residuals_n24.jpg" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_kmin-0.0_kmax-0.3/lcdm_z_heatmap.png" /></td>
+</tr>
+</table>
+
+</details>
+
+<details>
 <summary>zPk024 kmax=0.4</summary>
 
 <table>
@@ -204,6 +258,25 @@
 </tr>
 <tr>
 <td><img width="400" src="figures/zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.2__zPk=0.2/lcdm_z_heatmap.png" /></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary>zPk024+zBk0: zPk&lt;0.3, zBk&lt;0.3</summary>
+
+<table>
+<tr>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.3__zPk=0.3/pred_Om.jpg" /></td>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.3__zPk=0.3/pred_s8.jpg" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.3__zPk=0.3/scatter_n24.jpg" /></td>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.3__zPk=0.3/residuals_n24.jpg" /></td>
+</tr>
+<tr>
+<td><img width="400" src="figures/zPk0_zPk2_zPk4_zBk0_kmin-0.0_kmax-zBk=0.3__zPk=0.3/lcdm_z_heatmap.png" /></td>
 </tr>
 </table>
 
