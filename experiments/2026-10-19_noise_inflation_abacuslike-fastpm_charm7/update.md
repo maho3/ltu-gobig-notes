@@ -16,16 +16,16 @@ Two measurements:
 ## Summary
 
 - **The inflation is modest, 0–25% in std, and grows with kmax.** At kmax = 0.2 every summary is within 0–9% of the fixed-noise width. At zPk024 kmax 0.4 it is +11–23%; at kmax 0.6 it is +15% in Ωm and +21–30% in σ8.
-- **Varying σ_tran alone accounts for nearly all of it.** Outside the under-trained reparam kmax=0.3 cuts, the σ_tran-only model (orange) and the fully marginalized models (green, yellow) are within 0.15 of each other in ratio, and the σ_tran-only ratio is the larger one about as often as the smaller. The reparam and non-reparam case-3 models, trained on identical data, differ by up to 0.11 themselves. The one consistent pattern is σ8 at zPk kmax 0.6 without the bispectrum, where the σ_tran-only ratio is lower than both fully marginalized ones (zPk0: 1.26 vs 1.34–1.40; zPk024: 1.21 vs 1.25–1.30); elsewhere no cell shows a systematic extra cost from also varying σ_rad.
+- **Varying σ_tran alone accounts for nearly all of it.** Outside the under-trained reparam kmax=0.3 cuts, the σ_tran-only model (orange) and the fully marginalized models (green in the figures; reparam in the table) are within 0.15 of each other in ratio, and the σ_tran-only ratio is the larger one about as often as the smaller. The reparam and non-reparam case-3 models, trained on identical data, differ by up to 0.11 themselves. The one consistent pattern is σ8 at zPk kmax 0.6 without the bispectrum, where the σ_tran-only ratio is lower than both fully marginalized ones (zPk0: 1.26 vs 1.34–1.40; zPk024: 1.21 vs 1.25–1.30); elsewhere no cell shows a systematic extra cost from also varying σ_rad.
 - **Ωm and σ8 respond differently by summary.** For zPk0, the Ωm width is unchanged (≤ 6%) at every kmax, while σ8 inflates from 1.01–1.03 at 0.2 to 1.26–1.40 at 0.6. For zPk024 and +zBk0, Ωm inflates by 1.10–1.24 once zPk kmax ≥ 0.4, while σ8 stays at 0.98–1.05 for the bispectrum cuts (0.2, 0.2), (0.4, 0.2) and (0.4, 0.4).
 - **(A) and (B) agree** to within about 0.05 in ratio in most cells (largest gap 0.08), so evaluating at σ = 1.5 is representative of the noise-averaged width.
-- **The reparam zPk024 and +zBk0 kmax=0.3 cuts are outliers** (ratios 1.24–1.48), consistent with their short Optuna runs; the σ_tran-only model at the same cuts has ratios 1.05–1.18. Treat those green points as under-trained, not as a noise effect.
+- **The reparam zPk024 and +zBk0 kmax=0.3 cuts are outliers** (ratios 1.24–1.48), consistent with their short Optuna runs; the σ_tran-only model at the same cuts has ratios 1.05–1.18. Treat them as under-trained, not as a noise effect. The figures therefore show only the non-reparam case-3 models (which have no kmax=0.3 cut); the reparam numbers stay in the table and the `.npz`.
 
 <img width="1000" src="figures/noise_inflation_abacuslike_charm7_B.png" />
 
 ## (B) Common fixed-noise inputs
 
-Median std ×10³ and per-row median ratio to the fixed-noise model (trans = σ_tran-only, rep = reparam, non = non-reparam):
+Median std ×10³ and per-row median ratio to the fixed-noise model (trans = σ_tran-only, rep = reparam, non = non-reparam). The std axes in the figures start at 0.
 
 | summary | kmax | std(Ωm) fixed | Ωm ratio trans / rep / non | std(σ8) fixed | σ8 ratio trans / rep / non |
 |---|---|---|---|---|---|
