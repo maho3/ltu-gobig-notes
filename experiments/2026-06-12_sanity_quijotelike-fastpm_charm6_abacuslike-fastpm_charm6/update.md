@@ -1,8 +1,8 @@
 # Sanity check: quijotelike vs. abacuslike CHARM 6
 
-**Date**: 2026-06-12
-**Type**: Miscellaneous / sanity
-**Train**: —
+**Date**: 2026-06-12 \
+**Type**: Miscellaneous / sanity \
+**Train**: — \
 **Test**: quijotelike/fastpm_charm6 (L=1 Gpc/h), abacuslike/fastpm_charm6 (L=2 Gpc/h)
 
 ---

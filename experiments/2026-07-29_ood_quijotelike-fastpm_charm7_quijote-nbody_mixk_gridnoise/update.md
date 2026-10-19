@@ -1,11 +1,11 @@
 # quijotelike_fastpm_charm7 → quijote_nbody_mixk_gridnoise
-**Date**: 2026-07-29
-**Type**: OOD inference
-**Train**: quijotelike/fastpm_charm7
-**Test**: quijote/nbody_mixk_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0
-**kmax**: scalar cuts k<0.2/0.4/0.6 (zPk0, zPk0+zPk2+zPk4); dynamic cuts zPk<0.2/0.4/0.6 paired with zBk<0.2/0.4 (bispectrum-family summaries)
+**Date**: 2026-07-29 \
+**Type**: OOD inference \
+**Train**: quijotelike/fastpm_charm7 \
+**Test**: quijote/nbody_mixk_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0 \
+**kmax**: scalar cuts k<0.2/0.4/0.6 (zPk0, zPk0+zPk2+zPk4); dynamic cuts zPk<0.2/0.4/0.6 paired with zBk<0.2/0.4 (bispectrum-family summaries) \
 **Notes**: —
 
 ## Overview

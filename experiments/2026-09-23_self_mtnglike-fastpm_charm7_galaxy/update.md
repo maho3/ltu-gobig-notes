@@ -1,13 +1,13 @@
 # mtnglike / fastpm_charm7 (galaxy) — self-consistent diagnostics
 
-**Date**: 2026-09-23
-**Type**: Self-consistent
-**Suite**: mtnglike/fastpm_charm7 (L = 3 Gpc/h)
-**Tracer**: galaxy
-**kmax sweep summary**: zPk0+zPk2+zPk4 (k-cuts auto-discovered: k<0.2, k<0.4, k<0.6)
-**kmax values**: zPk kmax 0.2–0.6, scalar and dynamic zPk/zBk cuts
-**Feature sweep kmax**: ~0.4 (per-summary k-cut with closest zPk kmax)
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**Date**: 2026-09-23 \
+**Type**: Self-consistent \
+**Suite**: mtnglike/fastpm_charm7 (L = 3 Gpc/h) \
+**Tracer**: galaxy \
+**kmax sweep summary**: zPk0+zPk2+zPk4 (k-cuts auto-discovered: k<0.2, k<0.4, k<0.6) \
+**kmax values**: zPk kmax 0.2–0.6, scalar and dynamic zPk/zBk cuts \
+**Feature sweep kmax**: ~0.4 (per-summary k-cut with closest zPk kmax) \
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
 **Notes**: 1775 test points, 18 (summary, k-cut) cells, all recovered. Fiducial stdev is the median over the 66 test points near Ωm=0.3 / σ8=0.8 with nbar in 1e-4 to 5e-4. A box-size ladder comparing this suite against the L=1 and L=2 Gpc/h suites is written up separately in [2026-09-23 multisim](../2026-09-23_multisim_quijotelike-fastpm_charm7_cosmoHOD_vs_abacuslike-fastpm_charm7_cosmoHOD_vs_mtnglike-fastpm_charm7/update.md).
 
 ## Overview

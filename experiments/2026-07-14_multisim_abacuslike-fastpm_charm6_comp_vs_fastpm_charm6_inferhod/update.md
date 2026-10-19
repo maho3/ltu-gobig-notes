@@ -1,15 +1,15 @@
 # 2026-07-14_multisim_abacuslike-fastpm_charm6_comp_vs_fastpm_charm6_inferhod
 
-**Date**: 2026-07-14
-**Type**: Self-consistent (multi-sim comparison)
-**Suite**: abacuslike
-**Tracer**: galaxy
-**Model 1**: fastpm_charm6_comp ("just cosmo" — cosmology-only posterior)
-**Model 2**: fastpm_charm6_inferhod ("cosmo+HOD" — joint cosmology+HOD posterior)
-**kmax sweep summary**: zPk0+zPk2+zPk4
-**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6
-**Feature sweep kmax**: 0.4
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**Date**: 2026-07-14 \
+**Type**: Self-consistent (multi-sim comparison) \
+**Suite**: abacuslike \
+**Tracer**: galaxy \
+**Model 1**: fastpm_charm6_comp ("just cosmo" — cosmology-only posterior) \
+**Model 2**: fastpm_charm6_inferhod ("cosmo+HOD" — joint cosmology+HOD posterior) \
+**kmax sweep summary**: zPk0+zPk2+zPk4 \
+**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 \
+**Feature sweep kmax**: 0.4 \
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
 **Notes**: —
 
 ## Overview

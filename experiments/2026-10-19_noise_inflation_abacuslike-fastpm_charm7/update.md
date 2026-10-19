@@ -1,10 +1,10 @@
 # How much does marginalizing over the noise nuisance widen the cosmology posterior?
 
-**Date**: 2026-10-19
-**Type**: Self-consistent, noise-marginalization inflation
-**Train / Test**: abacuslike fastpm_charm7 (galaxy), self-consistent; four model sets that differ only in how the observational noise is treated
-**Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0
-**kmax**: zPk 0.2–0.6; zBk 0.2–0.4 (see `config.md`)
+**Date**: 2026-10-19 \
+**Type**: Self-consistent, noise-marginalization inflation \
+**Train / Test**: abacuslike fastpm_charm7 (galaxy), self-consistent; four model sets that differ only in how the observational noise is treated \
+**Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0 \
+**kmax**: zPk 0.2–0.6; zBk 0.2–0.4 (see `config.md`) \
 **Notes**: Fixed-noise value σ_rad = σ_tran = 1.5 Mpc/h, inside the logU(0.1, 4.51) prior and close to the effective Abacus noise found on 2026-09-28. Stdevs are medians over 78 fiducial test rows (24 lhids); ratios in (B) are per-row medians, since every model sees the same rows.
 
 Two measurements:

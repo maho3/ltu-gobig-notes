@@ -1,12 +1,12 @@
 # <experiment tag>
-**Date**: <YYYY-MM-DD>
-**Type**: Self-consistent
-**Suite**: <from config.md>
-**Tracer**: <from config.md>
-**kmax sweep summary**: <from config.md>
-**kmax values**: <from config.md>
-**Feature sweep kmax**: <from config.md>
-**Feature sweep summaries**: <from config.md>
+**Date**: <YYYY-MM-DD> \
+**Type**: Self-consistent \
+**Suite**: <from config.md> \
+**Tracer**: <from config.md> \
+**kmax sweep summary**: <from config.md> \
+**kmax values**: <from config.md> \
+**Feature sweep kmax**: <from config.md> \
+**Feature sweep summaries**: <from config.md> \
 **Notes**: <from config.md>
 
 ## Overview

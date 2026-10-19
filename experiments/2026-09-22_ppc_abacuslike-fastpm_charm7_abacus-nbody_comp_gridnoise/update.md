@@ -1,9 +1,9 @@
 # Posterior predictive check: `abacuslike/fastpm_charm7_cosmoHOD` against an Abacus N-body observation (zPk024, kmax=0.4)
 
-**Date**: 2026-09-22
-**Type**: Miscellaneous / posterior predictive check
-**Train**: abacuslike fastpm_charm7_cosmoHOD, L=2000 Mpc/h, N=256, z=0.5 (a=0.66666); posterior and forward chain both from this suite
-**Test**: abacus nbody_comp_gridnoise, lhid 38 = `AbacusSummit_base_c018_ph000` ("MultiDark Planck"), LCDM with Mnu=0, L=2000 Mpc/h, `hod00001_noise000008.h5` (σ_rad = σ_tran = 0.75175)
+**Date**: 2026-09-22 \
+**Type**: Miscellaneous / posterior predictive check \
+**Train**: abacuslike fastpm_charm7_cosmoHOD, L=2000 Mpc/h, N=256, z=0.5 (a=0.66666); posterior and forward chain both from this suite \
+**Test**: abacus nbody_comp_gridnoise, lhid 38 = `AbacusSummit_base_c018_ph000` ("MultiDark Planck"), LCDM with Mnu=0, L=2000 Mpc/h, `hod00001_noise000008.h5` (σ_rad = σ_tran = 0.75175) \
 **Notes**: Out-of-distribution: only the observation moves, the posterior, the forward chain and the quantile reference pool stay the training suite's. 100 joint draws from q(θ|x_obs), all 100 collected with cosmology, HOD and noise verified against the draw to 1e-5. Residuals are element-wise between resimulated and observed feature vectors. Same train/test pair as the 2026-08-20 OOD inference run.
 
 ---

@@ -1,8 +1,8 @@
 # Posterior predictive check: `abacuslike/fastpm_charm7_cosmoHOD_reparam` self-consistent (zPk024, kmax=0.4)
 
-**Date**: 2026-09-24
-**Type**: Miscellaneous / posterior predictive check
-**Suite**: abacuslike fastpm_charm7_cosmoHOD_reparam, L=2000 Mpc/h, N=256, z=0.5; self-consistent, x_obs from the training suite's own test split (lhid 2213, `hod00002.h5`). Trained with `infer.reparam_degeneracy=True`, so the flow samples (`degen_r`, `degen_phi`) in place of (`eta_vb_centrals`, `noise_radial`)
+**Date**: 2026-09-24 \
+**Type**: Miscellaneous / posterior predictive check \
+**Suite**: abacuslike fastpm_charm7_cosmoHOD_reparam, L=2000 Mpc/h, N=256, z=0.5; self-consistent, x_obs from the training suite's own test split (lhid 2213, `hod00002.h5`). Trained with `infer.reparam_degeneracy=True`, so the flow samples (`degen_r`, `degen_phi`) in place of (`eta_vb_centrals`, `noise_radial`) \
 **Notes**: 99 of 100 draws collected (one draw has status `missing_diag`), so N = 99 and the p-value floor is 1/(N+1) = 0.01. The draws were inverted to physical parameters for the simulations. Observed cosmology [Ωm, Ωb, h, ns, σ8] = [0.2277, 0.0457, 0.7534, 1.0621, 0.6942]. The self-consistent PPC on the non-reparam predecessor (`fastpm_charm6_comphod`, lhid 1880) is in the 2026-08-13 note; the OOD PPC on `fastpm_charm7_cosmoHOD` is in the 2026-09-22 note. `plots/ppc_pvalue.png` and `ppc_pvalues.tsv` in the campaign directory (38 draws, older p-value implementation) are stale and not used.
 
 ---

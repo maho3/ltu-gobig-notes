@@ -1,11 +1,11 @@
 # ood_abacuslike-fastpm_charm6_abacus-custom_hodz_gridnoise
-**Date**: 2026-06-24
-**Type**: Abacus OOD inference
-**Train**: abacuslike/fastpm_charm6
-**Test**: abacus/custom_hodz_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
+**Date**: 2026-06-24 \
+**Type**: Abacus OOD inference \
+**Train**: abacuslike/fastpm_charm6 \
+**Test**: abacus/custom_hodz_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6 \
 **Notes**: 2 Gpc/h abacuslike CHARM run tested on Abacus custom HOD with noise grid
 
 ## Overview

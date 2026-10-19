@@ -1,8 +1,8 @@
 # Sanity check: mtnglike/fastpm_charm7 live pipeline vs. backfilled suite
 
-**Date**: 2026-08-13
-**Type**: Miscellaneous / sanity
-**Suite**: mtnglike/fastpm_charm7, L=3000, N=384, z=0.5 (a=0.666660). lhid<3000 is produced by the current live FastPM→CHARM7 pipeline (624 available); lhid≥3000 is backfilled from a different, older simulation suite/pipeline (909 available). 25 lhids subsampled per group (evenly spaced over the sorted available lhids, seed=0).
+**Date**: 2026-08-13 \
+**Type**: Miscellaneous / sanity \
+**Suite**: mtnglike/fastpm_charm7, L=3000, N=384, z=0.5 (a=0.666660). lhid<3000 is produced by the current live FastPM→CHARM7 pipeline (624 available); lhid≥3000 is backfilled from a different, older simulation suite/pipeline (909 available). 25 lhids subsampled per group (evenly spaced over the sorted available lhids, seed=0). \
 **Notes**: `scripts/sanity_check_mtng_charm7.py`. P(k) monopole computed on a CIC mesh downsampled from N=384 to 192. 3 low-group lhids (1007, 1033, 1059) failed to load: both the direct `config.yaml` and the `fastpm/` fallback were missing, so these have no config left on disk at all (likely already offloaded without leaving a tombstone). All 25 high-group lhids loaded successfully.
 
 ---

@@ -1,12 +1,12 @@
 # mtnglike / fastpm_charm7 → Quijote 3 Gpc/h — OOD inference
 
-**Date**: 2026-09-23
-**Type**: OOD inference (single-cosmology, corner plots)
-**Train**: mtnglike/fastpm_charm7
-**Test**: quijote3gpch/nbody
-**Tracer**: galaxy
-**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 (18 cells, all recovered)
-**kmax**: zPk kmax 0.2–0.6, scalar and dynamic zPk/zBk cuts
+**Date**: 2026-09-23 \
+**Type**: OOD inference (single-cosmology, corner plots) \
+**Train**: mtnglike/fastpm_charm7 \
+**Test**: quijote3gpch/nbody \
+**Tracer**: galaxy \
+**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 (18 cells, all recovered) \
+**kmax**: zPk kmax 0.2–0.6, scalar and dynamic zPk/zBk cuts \
 **Notes**: Single Quijote N-body realisation at the fiducial cosmology (lhid 2000, L=3 Gpc/h). A single true cosmology means coverage and calibration statistics over a population of cosmologies are not available, so none are produced; the diagnostic is the posterior against a known truth, summarised by the joint Mahalanobis z on (Ωm, σ8), z = sqrt(dᵀC⁻¹d) with d = θ_true − posterior median and C the 2×2 posterior covariance. No self-consistent reference is drawn.
 
 **Coverage limitation**: this test set spans only 3 of the 49 noise-grid configurations, and all three lie on the σ_rad = σ_tran diagonal (0.75, 1.50, 2.26), with 5 HOD realisations each for 15 test points in total. There is no σ_rad vs σ_tran contrast available, so nothing here separates radial from transverse positional noise. The remaining 46 configurations need galaxy catalogues regenerated, not just preprocessing. The noise-selection logic in the script is general and will pick the rest up automatically once they exist.

@@ -1,7 +1,7 @@
 # Sanity check: FastPM CHARM6 L=2 Gpc/h vs. CHARM7 L=3 Gpc/h (MTNG-like)
 
-**Date**: 2026-07-23
-**Type**: Miscellaneous / sanity
+**Date**: 2026-07-23 \
+**Type**: Miscellaneous / sanity \
 **Suite**: fastpm_charm6 L2000 vs. fastpm_charm7 L3000 (MTNG-like), lhid 3000, a=0.666667, compared against quijote nbody reference
 
 ---

@@ -1,7 +1,7 @@
 # Sanity check: Quijote N-body vs. CHARM6 at L=1 and 2 Gpc/h
 
-**Date**: 2026-07-08
-**Type**: Miscellaneous / sanity
+**Date**: 2026-07-08 \
+**Type**: Miscellaneous / sanity \
 **Suite**: Quijote N-body L1000 (reference) vs. fastpm_charm6 L1000 vs. fastpm_charm6 L2000, lhid 663, a=0.666667
 
 ---

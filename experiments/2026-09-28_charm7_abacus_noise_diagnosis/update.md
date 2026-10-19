@@ -1,9 +1,9 @@
 # Diagnosing the CHARM7 → Abacus OOD bias, and whether to drop or fix the noise nuisance
 
-**Date**: 2026-09-28
-**Type**: Diagnosis / model misspecification
-**Train**: abacuslike fastpm_charm7 (halos) and fastpm_charm7_cosmoHOD (trained NPE ensembles), L=2000 Mpc/h, N=256, z=0.5
-**Test**: abacus nbody_comp_gridnoise, c000 (Planck2018, lhid 0–5, six phases, Mν=0.06 eV) and c018 (lhid 38, Mν=0, the box used in the 2026-09-22 PPC)
+**Date**: 2026-09-28 \
+**Type**: Diagnosis / model misspecification \
+**Train**: abacuslike fastpm_charm7 (halos) and fastpm_charm7_cosmoHOD (trained NPE ensembles), L=2000 Mpc/h, N=256, z=0.5 \
+**Test**: abacus nbody_comp_gridnoise, c000 (Planck2018, lhid 0–5, six phases, Mν=0.06 eV) and c018 (lhid 38, Mν=0, the box used in the 2026-09-22 PPC) \
 **Notes**: No new N-body or halo catalogs. Galaxies were re-populated from existing `halos.h5` with shared HODs and summarized on a noise grid; all new data is in `cmass-ili/tmp/charm_vs_abacus/`. No networks were retrained.
 
 ---

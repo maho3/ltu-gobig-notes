@@ -1,12 +1,12 @@
 # mtnglike / fastpm_charm7 → MTNG lightcone — OOD inference
 
-**Date**: 2026-09-23
-**Type**: OOD inference (single-cosmology, corner plots)
-**Train**: mtnglike/fastpm_charm7
-**Test**: mtng/nbody
-**Tracer**: mtng_lightcone
-**Summaries**: Pk0, Pk0+Pk2+Pk4, Pk0+Pk2+Pk4+EqBk0, Pk0+Pk2+Pk4+SqBk0, Pk0+Pk2+Pk4+Bk0 (18 cells, all recovered)
-**kmax**: Pk kmax 0.2–0.6, scalar and dynamic Pk/Bk cuts
+**Date**: 2026-09-23 \
+**Type**: OOD inference (single-cosmology, corner plots) \
+**Train**: mtnglike/fastpm_charm7 \
+**Test**: mtng/nbody \
+**Tracer**: mtng_lightcone \
+**Summaries**: Pk0, Pk0+Pk2+Pk4, Pk0+Pk2+Pk4+EqBk0, Pk0+Pk2+Pk4+SqBk0, Pk0+Pk2+Pk4+Bk0 (18 cells, all recovered) \
+**kmax**: Pk kmax 0.2–0.6, scalar and dynamic Pk/Bk cuts \
 **Notes**: MillenniumTNG lightcone at its own cosmology, 49 noise configurations with one test point each. A single true cosmology means coverage and calibration statistics over a population of cosmologies are not available, so none are produced; the diagnostic is the posterior against a known truth, summarised by the joint Mahalanobis z on (Ωm, σ8), z = sqrt(dᵀC⁻¹d) with d = θ_true − posterior median and C the 2×2 posterior covariance. Each cell contributes corners at its z-minimising noise configuration plus 3 drawn at random. No self-consistent reference is drawn.
 
 ## Overview

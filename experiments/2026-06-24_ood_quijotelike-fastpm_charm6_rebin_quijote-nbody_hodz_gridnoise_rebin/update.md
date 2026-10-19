@@ -1,11 +1,11 @@
 # ood_quijotelike-fastpm_charm6_rebin_quijote-nbody_hodz_gridnoise_rebin
-**Date**: 2026-06-24
-**Type**: OOD inference
-**Train**: quijotelike/fastpm_charm6_rebin
-**Test**: quijote/nbody_hodz_gridnoise_rebin
-**Tracer**: galaxy
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
+**Date**: 2026-06-24 \
+**Type**: OOD inference \
+**Train**: quijotelike/fastpm_charm6_rebin \
+**Test**: quijote/nbody_hodz_gridnoise_rebin \
+**Tracer**: galaxy \
+**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6 \
 **Notes**: quijotelike-fastpm_charm6_rebin is a rebinned variant of the quijotelike suite
 
 ## Overview

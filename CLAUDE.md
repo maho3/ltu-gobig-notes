@@ -18,6 +18,7 @@ Each experiment lives under `experiments/<dir>/` and contains:
 - If only overview figures are present, write from Pass 1 only and note zoom-ins are unavailable
 - Describe observations only — do not infer causal mechanisms or draw conclusions about underlying physics beyond what the figures directly show
 - Be concise. Avoid subtitle-style bullet points.
+- In the `update.md` header, end every `**Field**: value` line that is followed by another field with ` \` (a hard line break); otherwise GitHub collapses the header into one paragraph
 
 ---
 
@@ -362,9 +363,9 @@ the common case; follow `2026-07-23_sanity_fastpm_mtnglike/update.md` or
 ```markdown
 # Sanity check: <what was compared, in words, not the directory name>
 
-**Date**: YYYY-MM-DD
-**Type**: Miscellaneous / <flavor, e.g. sanity>
-**Suite**: <catalogs/suites compared, with box size, lhid, scale factor or z, and which is the reference>
+**Date**: YYYY-MM-DD \
+**Type**: Miscellaneous / <flavor, e.g. sanity> \
+**Suite**: <catalogs/suites compared, with box size, lhid, scale factor or z, and which is the reference> \
 **Notes**: <optional: data paths, missing sims, binning, anything a reader needs to trust the numbers>
 
 ---

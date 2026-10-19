@@ -1,13 +1,13 @@
 # Self-consistent diagnostics: quijotelike/fastpm_charm6_rebin
 
-**Date**: 2026-06-17
-**Type**: Self-consistent
-**Suite**: quijotelike/fastpm_charm6_rebin
-**Tracer**: galaxy
-**kmax sweep summary**: zPk0+zPk2+zPk4
-**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6
-**Feature sweep kmax**: 0.4
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**Date**: 2026-06-17 \
+**Type**: Self-consistent \
+**Suite**: quijotelike/fastpm_charm6_rebin \
+**Tracer**: galaxy \
+**kmax sweep summary**: zPk0+zPk2+zPk4 \
+**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 \
+**Feature sweep kmax**: 0.4 \
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
 **Notes**: Rebinned power spectrum and bispectrum summaries; comparison to old (non-rebinned) CHARM6 summaries included.
 
 ## Overview

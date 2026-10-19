@@ -1,9 +1,9 @@
 # Posterior predictive check: `abacuslike/fastpm_charm7_cosmoHOD_reparam` against a noise-free Abacus observation, seven inference configurations
 
-**Date**: 2026-10-02
-**Type**: Miscellaneous / posterior predictive check
-**Train**: abacuslike fastpm_charm7_cosmoHOD_reparam (`infer.reparam_degeneracy=True`), L=2000 Mpc/h, N=256, z=0.5; 10-net lampe/NPE ensembles; posterior, forward chain and quantile reference pool all from this suite
-**Test**: abacus nbody_comp_gridnoise_reparam, lhid 38 = `AbacusSummit_base_c018_ph000` (LCDM, Mν=0), `hod00001_noise000000.h5`, i.e. σ_rad = σ_tran = 0. True [Ωm, Ωb, h, n_s, σ8] = [0.3071, 0.0482, 0.6777, 0.960, 0.8197]
+**Date**: 2026-10-02 \
+**Type**: Miscellaneous / posterior predictive check \
+**Train**: abacuslike fastpm_charm7_cosmoHOD_reparam (`infer.reparam_degeneracy=True`), L=2000 Mpc/h, N=256, z=0.5; 10-net lampe/NPE ensembles; posterior, forward chain and quantile reference pool all from this suite \
+**Test**: abacus nbody_comp_gridnoise_reparam, lhid 38 = `AbacusSummit_base_c018_ph000` (LCDM, Mν=0), `hod00001_noise000000.h5`, i.e. σ_rad = σ_tran = 0. True [Ωm, Ωb, h, n_s, σ8] = [0.3071, 0.0482, 0.6777, 0.960, 0.8197] \
 **Notes**: Out-of-distribution. Seven campaigns, one per inference configuration, each with 50 joint draws from q(θ|x_obs), resimulated through FastPM → CHARM charm7 (`charm_joint_v19.pth`, on DeltaAI) → `apply_hod` → `cmass.diagnostics.summ`. All 7 × 50 draws were collected, with cosmology, HOD and noise verified against the draw. Two zPk024 kmax=0.3 draws (ids 34, 35) had their stage-C jobs cancelled by SLURM and were rerun. With N = 50 the p-value floor is 1/(N+1) = 0.020, and the Monte Carlo error is ±0.06–0.07 near p = 0.5. The draws were inverted from (degen_r, degen_phi) to physical (eta_vb_centrals, noise_radial) before simulation; 4 zPk0 kmax=0.3 draws were rejected for falling outside the physical prior box and redrawn. x_obs comes from the Abacus suite re-preprocessed with `reparam_degeneracy=True`, `test_frac=1` (see the 2026-10-01 OOD note). Same observed lhid as the 2026-09-22 PPC, but at noise (0, 0) instead of (0.75, 0.75).
 
 ---

@@ -1,11 +1,11 @@
 # ood_quijotelike-fastpm_charm6_rebin_abacus1gpch-custom_hodz_gridnoise_rebin
-**Date**: 2026-06-24
-**Type**: Abacus OOD inference
-**Train**: quijotelike/fastpm_charm6_rebin
-**Test**: abacus1gpch/custom_hodz_gridnoise_rebin
-**Tracer**: galaxy
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
+**Date**: 2026-06-24 \
+**Type**: Abacus OOD inference \
+**Train**: quijotelike/fastpm_charm6_rebin \
+**Test**: abacus1gpch/custom_hodz_gridnoise_rebin \
+**Tracer**: galaxy \
+**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6 \
 **Notes**: rebinned variant; zPk0 only at kmax=0.2, 0.3, 0.5, 0.6 (kmax=0.4 missing); bispectrum cells only at kmax=0.2, 0.3, 0.4
 
 ## Overview

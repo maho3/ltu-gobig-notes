@@ -1,10 +1,10 @@
 # AbacusSummit CompaSO halo port: NFW-fit concentration, and its effect on galaxy summaries
 
-**Date**: 2026-08-07 (galaxy-summary section added 2026-08-18)
-**Type**: Miscellaneous / decision
+**Date**: 2026-08-07 (galaxy-summary section added 2026-08-18) \
+**Type**: Miscellaneous / decision \
 **Suite**: AbacusSummit `base` (z=0.500, L=2000 Mpc/h, 6912 PPD), 114 emulator-grid
 cosmologies (`AbacusSummit_base_c001_ph000` ... `c181_ph000`) plus 25 `c000` phases,
-cleaned CompaSO halos ported into the `ltu-cmass` `halos.h5` format.
+cleaned CompaSO halos ported into the `ltu-cmass` `halos.h5` format. \
 **Notes**: Halo-level numbers are read from the production `halos.h5` outputs
 (`/anvil/scratch/x-mho1/cmass-ili/abacus/{custom,nbodyall}/L2000-N256`, cosmology
 `c001_ph000` = lhid 6, Ωm=0.276126) and the SLURM array logs (job 19727045). Output

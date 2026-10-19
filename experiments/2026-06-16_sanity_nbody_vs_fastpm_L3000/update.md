@@ -1,7 +1,7 @@
 # Sanity check: N-body vs. FastPM+CHARM6 at L=3 Gpc/h
 
-**Date**: 2026-06-16
-**Type**: Miscellaneous / sanity
+**Date**: 2026-06-16 \
+**Type**: Miscellaneous / sanity \
 **Suite**: Quijote N-body (reference) vs. fastpm_charm6, L=3 Gpc/h, fiducial cosmology, z=0.5 (a=0.6667)
 
 ---

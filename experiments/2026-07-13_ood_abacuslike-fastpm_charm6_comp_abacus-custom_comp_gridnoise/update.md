@@ -1,11 +1,11 @@
 # ood_abacuslike-fastpm_charm6_comp_abacus-custom_comp_gridnoise
-**Date**: 2026-07-13
-**Type**: Abacus OOD inference
-**Train**: abacuslike/fastpm_charm6_comp
-**Test**: abacus/custom_comp_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4 (all summaries); 0.5, 0.6 (zPk0, zPk024 only)
+**Date**: 2026-07-13 \
+**Type**: Abacus OOD inference \
+**Train**: abacuslike/fastpm_charm6_comp \
+**Test**: abacus/custom_comp_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4 (all summaries); 0.5, 0.6 (zPk0, zPk024 only) \
 **Notes**: abacuslike CHARM run (wider "comp" HOD prior) tested on Abacus with the same wider HOD, aligning the training and test HOD priors more closely than in the previous abacus-custom_hodz_gridnoise comparison
 
 ## Overview

@@ -1,13 +1,13 @@
 # mtnglike / fastpm_charm7 (mtng_lightcone) — self-consistent diagnostics
 
-**Date**: 2026-09-23
-**Type**: Self-consistent
-**Suite**: mtnglike/fastpm_charm7 (L = 3 Gpc/h)
-**Tracer**: mtng_lightcone
-**kmax sweep summary**: Pk0+Pk2+Pk4 (k-cuts auto-discovered: k<0.2, k<0.4, k<0.6)
-**kmax values**: Pk kmax 0.2–0.6, scalar and dynamic Pk/Bk cuts
-**Feature sweep kmax**: ~0.4 (per-summary k-cut with closest Pk kmax)
-**Feature sweep summaries**: Pk0, Pk0+Pk2+Pk4, Pk0+Pk2+Pk4+EqBk0, Pk0+Pk2+Pk4+SqBk0, Pk0+Pk2+Pk4+Bk0
+**Date**: 2026-09-23 \
+**Type**: Self-consistent \
+**Suite**: mtnglike/fastpm_charm7 (L = 3 Gpc/h) \
+**Tracer**: mtng_lightcone \
+**kmax sweep summary**: Pk0+Pk2+Pk4 (k-cuts auto-discovered: k<0.2, k<0.4, k<0.6) \
+**kmax values**: Pk kmax 0.2–0.6, scalar and dynamic Pk/Bk cuts \
+**Feature sweep kmax**: ~0.4 (per-summary k-cut with closest Pk kmax) \
+**Feature sweep summaries**: Pk0, Pk0+Pk2+Pk4, Pk0+Pk2+Pk4+EqBk0, Pk0+Pk2+Pk4+SqBk0, Pk0+Pk2+Pk4+Bk0 \
 **Notes**: 1780 test points, 18 (summary, k-cut) cells, all recovered. This tracer infers a 23-parameter theta (5 cosmology + 16 redshift-binned HOD + 2 noise) and its summaries carry no `z` prefix. Its nbar range is [-6.22, -4.22] in log10, an order of magnitude below the cubic-box galaxy tracer, so the fiducial-point band is 1e-5 to 1e-4 rather than the usual 1e-4 to 5e-4; that band selects 104 test points near Ωm=0.3 / σ8=0.8. Figures are directly comparable to the galaxy tracer's only with that difference in mind.
 
 ## Overview

@@ -1,12 +1,12 @@
 # 2026-06-24_self_quijotelike-fastpm_charm6_comp
-**Date**: 2026-06-24
-**Type**: Self-consistent
-**Suite**: quijotelike/fastpm_charm6_comp
-**Tracer**: galaxy
-**kmax sweep summary**: zPk0+zPk2+zPk4
-**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6
-**Feature sweep kmax**: 0.4
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**Date**: 2026-06-24 \
+**Type**: Self-consistent \
+**Suite**: quijotelike/fastpm_charm6_comp \
+**Tracer**: galaxy \
+**kmax sweep summary**: zPk0+zPk2+zPk4 \
+**kmax values**: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 \
+**Feature sweep kmax**: 0.4 \
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
 **Notes**: Uses wider HOD prior (comp) than hodz variants; expect higher posterior stdev as baseline.
 
 ## Overview

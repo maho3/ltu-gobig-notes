@@ -1,8 +1,8 @@
 # Sanity check: FastPM CHARM7 MTNG-like L=3 Gpc/h test-set power spectrum diversity
 
-**Date**: 2026-07-23
-**Type**: Miscellaneous / sanity
-**Suite**: fastpm_charm7, mtnglike geometry, L=3000/h=384, lhid 3000-3408
+**Date**: 2026-07-23 \
+**Type**: Miscellaneous / sanity \
+**Suite**: fastpm_charm7, mtnglike geometry, L=3000/h=384, lhid 3000-3408 \
 **Notes**: 360/409 sims have completed lightcone diagnostics (49 missing); redshift-space power spectrum multipoles P0/P2/P4 (192 k-bins, 0.0018 < k < 0.41 h/Mpc) read from `diag/mtng_lightcone/hod00001_aug00001.h5` per lhid
 
 ---

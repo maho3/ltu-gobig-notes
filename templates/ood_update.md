@@ -1,11 +1,11 @@
 # <experiment tag>
-**Date**: <YYYY-MM-DD>
-**Type**: OOD inference
-**Train**: <from config.md>
-**Test**: <from config.md>
-**Tracer**: <from config.md>
-**Summaries**: <from config.md>
-**kmax**: <from config.md>
+**Date**: <YYYY-MM-DD> \
+**Type**: OOD inference \
+**Train**: <from config.md> \
+**Test**: <from config.md> \
+**Tracer**: <from config.md> \
+**Summaries**: <from config.md> \
+**kmax**: <from config.md> \
 **Notes**: <from config.md>
 
 ## Overview

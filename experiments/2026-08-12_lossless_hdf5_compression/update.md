@@ -1,10 +1,10 @@
 # Lossless in-place HDF5 compression of the cmass-ili database (Bridges2)
 
-**Date**: 2026-08-12
-**Type**: Miscellaneous / data operation
+**Date**: 2026-08-12 \
+**Type**: Miscellaneous / data operation \
 **Scope**: `/ocean/projects/phy240015p/mho1/cmass-ili/` on Bridges2. Four suites
 recompressed in place so far: `quijotelike_nophase/fastpm`,
-`quijotelike-fid/fastpm`, `abacuslike/pinocchio`, `mtnglike/fastpm`.
+`quijotelike-fid/fastpm`, `abacuslike/pinocchio`, `mtnglike/fastpm`. \
 **Notes**: Scratch/tooling lived in `/ocean/projects/phy240015p/mho1/compression_scratch/`,
 which may be deleted. The scripts referenced here are copied into `scripts/`
 alongside this note; the full running report is `scripts/rollout_report_full.md`.

@@ -1,12 +1,12 @@
 # abacuslike / fastpm_charm7 — self-consistent diagnostics + volume scaling
 
-**Date**: 2026-08-19
-**Type**: Self-consistent
-**Suite**: abacuslike/fastpm_charm7
-**Tracer**: galaxy
-**kmax sweep summary**: zPk0+zPk2+zPk4 (k-cuts auto-discovered: k<0.2, k<0.4, k<0.6)
-**Feature sweep kmax**: ~0.4 (per-summary k-cut with closest zPk kmax)
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**Date**: 2026-08-19 \
+**Type**: Self-consistent \
+**Suite**: abacuslike/fastpm_charm7 \
+**Tracer**: galaxy \
+**kmax sweep summary**: zPk0+zPk2+zPk4 (k-cuts auto-discovered: k<0.2, k<0.4, k<0.6) \
+**Feature sweep kmax**: ~0.4 (per-summary k-cut with closest zPk kmax) \
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
 **Notes**: Includes a volume-scaling comparison (scripts/volume_scaling.py) against quijotelike/fastpm_charm7, testing whether fiducial Ωm/σ8 posterior stdev scales as V^-1/2 between L=1 and L=2 Gpc/h boxes.
 
 ## Overview

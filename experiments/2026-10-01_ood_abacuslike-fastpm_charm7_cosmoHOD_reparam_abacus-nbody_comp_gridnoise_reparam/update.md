@@ -1,11 +1,11 @@
 # ood_abacuslike-fastpm_charm7_cosmoHOD_reparam_abacus-nbody_comp_gridnoise_reparam
-**Date**: 2026-10-01
-**Type**: Abacus OOD inference
-**Train**: abacuslike/fastpm_charm7_cosmoHOD_reparam
-**Test**: abacus/nbody_comp_gridnoise_reparam
-**Tracer**: galaxy
-**Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0; zPk0+zPk2+zPk4+zEqBk0; zPk0+zPk2+zPk4+zSqBk0
-**kmax**: zPk0 and zPk024: 0.2, 0.3, 0.4, 0.6 (scalar); zPk024+zBk0: zBk<0.2 with zPk<0.2/0.4/0.6, zBk<0.3 with zPk<0.3, and zBk<0.4 with zPk<0.4; zPk024+{zEqBk0,zSqBk0}: as zBk0 without the 0.3 cut. The three kmax=0.3 cells were added on 2026-10-02, after their models finished training (`infer=k03`, Optuna cut short by sqlite lock contention, so ~57-77 completed trials per study against ~170 for the others).
+**Date**: 2026-10-01 \
+**Type**: Abacus OOD inference \
+**Train**: abacuslike/fastpm_charm7_cosmoHOD_reparam \
+**Test**: abacus/nbody_comp_gridnoise_reparam \
+**Tracer**: galaxy \
+**Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0; zPk0+zPk2+zPk4+zEqBk0; zPk0+zPk2+zPk4+zSqBk0 \
+**kmax**: zPk0 and zPk024: 0.2, 0.3, 0.4, 0.6 (scalar); zPk024+zBk0: zBk<0.2 with zPk<0.2/0.4/0.6, zBk<0.3 with zPk<0.3, and zBk<0.4 with zPk<0.4; zPk024+{zEqBk0,zSqBk0}: as zBk0 without the 0.3 cut. The three kmax=0.3 cells were added on 2026-10-02, after their models finished training (`infer=k03`, Optuna cut short by sqlite lock contention, so ~57-77 completed trials per study against ~170 for the others). \
 **Notes**: Models trained with `infer.reparam_degeneracy=True`, i.e. the flow samples (degen_r, degen_phi) in place of (eta_vb_centrals, noise_radial); Ωm and σ8 are unaffected by the reparameterization. The Abacus N-body test suite (same halos and diag files as `nbody_comp_gridnoise`, 5732 rows over 119 lhids × 49 noise configs) was re-preprocessed with `reparam_degeneracy=True`, `val_frac=0`, `test_frac=1` so that theta_test is in the model's coordinates. The comparison "non-reparam" numbers below are the sibling `fastpm_charm7_cosmoHOD` models on `abacus/nbody_comp_gridnoise` (17 of 18 cells; its zPk0 kmax=0.4 cell has no OOD samples). The bias table was computed from the same `posterior_samples.npy` files the figures are built from (script and CSV: `cmass-ili/scratch/reparam_ood_table/`). In every heatmap the x-axis is σ_tran and the y-axis σ_rad, both 0 to 4.51 Mpc/h.
 
 ## Overview

@@ -1,8 +1,8 @@
 # Sanity check: FastPM MTNG-like L3000-N384 batch consistency (4 batches of 1000)
 
-**Date**: 2026-08-13
-**Type**: Miscellaneous / sanity
-**Suite**: mtnglike fastpm L3000-N384, lhid 0–3999 split into four batches of 1000 (`lhid // 1000`), snapshots a=0.58622–0.76721 (z=0.70→0.30)
+**Date**: 2026-08-13 \
+**Type**: Miscellaneous / sanity \
+**Suite**: mtnglike fastpm L3000-N384, lhid 0–3999 split into four batches of 1000 (`lhid // 1000`), snapshots a=0.58622–0.76721 (z=0.70→0.30) \
 **Notes**: Data at `/anvil/scratch/x-mho1/cmass-ili/mtnglike/fastpm/L3000-N384/{0..3999}/nbody.h5`. 3999/4000 sims read successfully. Batch 3 (lhid 3012–3999, 988/1000 sims) was run by design with only 7 of 10 snapshots saved; lhid 3000–3011 (12 sims) have the full 10.
 
 ---

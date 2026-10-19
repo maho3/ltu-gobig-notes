@@ -1,12 +1,12 @@
 # Box-size ladder: 1 vs 2 vs 3 Gpc/h — constraining power vs volume
 
-**Date**: 2026-09-23
-**Type**: Multisim comparison
-**Suites**: quijotelike/fastpm_charm7_cosmoHOD (L=1 Gpc/h, V=1), abacuslike/fastpm_charm7_cosmoHOD (L=2, V=8), mtnglike/fastpm_charm7 (L=3, V=27 (Gpc/h)³)
-**Tracer**: galaxy
-**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
-**kmax**: zPk kmax 0.2–0.6; the all-summary overlay holds the reference cut at zPk≈0.4
-**Fiducial nbar band**: 1e-4 to 5e-4
+**Date**: 2026-09-23 \
+**Type**: Multisim comparison \
+**Suites**: quijotelike/fastpm_charm7_cosmoHOD (L=1 Gpc/h, V=1), abacuslike/fastpm_charm7_cosmoHOD (L=2, V=8), mtnglike/fastpm_charm7 (L=3, V=27 (Gpc/h)³) \
+**Tracer**: galaxy \
+**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
+**kmax**: zPk kmax 0.2–0.6; the all-summary overlay holds the reference cut at zPk≈0.4 \
+**Fiducial nbar band**: 1e-4 to 5e-4 \
 **Notes**: All three suites run the same fastpm_charm7 pipeline on the same galaxy tracer, infer the same 17-parameter theta (5 cosmology + 10 HOD + 2 noise), and share the same 5 summaries and the same k-cut grid, so cells match one-to-one by directory name. The metric is the median posterior stdev over test points near Ωm=0.3 / σ8=0.8 in a fixed nbar band — the same `fiducial_stdev` used by the self-consistent notes. This extends the two-suite comparison in [2026-08-19](../2026-08-19_self_abacuslike-fastpm_charm7/update.md) to a third volume; the suites there have since been renamed to `*_cosmoHOD`.
 
 ## Overview

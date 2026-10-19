@@ -1,12 +1,12 @@
 # self_quijotelike-fastpm_charm7
-**Date**: 2026-07-29
-**Type**: Self-consistent
-**Suite**: quijotelike/fastpm_charm7
-**Tracer**: galaxy
-**kmax sweep summary**: zPk0+zPk2+zPk4 (k-cuts auto-discovered)
-**kmax values**: zPk cuts 0.2 / 0.4 / 0.6 h/Mpc; bispectrum summaries additionally carry dynamic zBk cuts at 0.2 and 0.4
-**Feature sweep kmax**: 0.4 (per-summary k-cut with closest zPk kmax)
-**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0
+**Date**: 2026-07-29 \
+**Type**: Self-consistent \
+**Suite**: quijotelike/fastpm_charm7 \
+**Tracer**: galaxy \
+**kmax sweep summary**: zPk0+zPk2+zPk4 (k-cuts auto-discovered) \
+**kmax values**: zPk cuts 0.2 / 0.4 / 0.6 h/Mpc; bispectrum summaries additionally carry dynamic zBk cuts at 0.2 and 0.4 \
+**Feature sweep kmax**: 0.4 (per-summary k-cut with closest zPk kmax) \
+**Feature sweep summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zEqBk0, zPk0+zPk2+zPk4+zSqBk0, zPk0+zPk2+zPk4+zBk0 \
 **Notes**: —
 
 ## Overview

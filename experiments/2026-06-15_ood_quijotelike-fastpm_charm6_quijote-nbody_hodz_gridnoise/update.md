@@ -1,11 +1,11 @@
 # 2026-06-15_ood_quijotelike-fastpm_charm6_quijote-nbody_hodz_gridnoise
-**Date**: 2026-06-15
-**Type**: OOD inference
-**Train**: quijotelike/fastpm_charm6
-**Test**: quijote/nbody_hodz_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4
+**Date**: 2026-06-15 \
+**Type**: OOD inference \
+**Train**: quijotelike/fastpm_charm6 \
+**Test**: quijote/nbody_hodz_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4 \
 **Notes**: 
 
 ## Overview

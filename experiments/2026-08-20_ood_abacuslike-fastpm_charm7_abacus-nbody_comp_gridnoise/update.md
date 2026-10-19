@@ -1,11 +1,11 @@
 # ood_abacuslike-fastpm_charm7_abacus-nbody_comp_gridnoise
-**Date**: 2026-08-20
-**Type**: Abacus OOD inference
-**Train**: abacuslike/fastpm_charm7
-**Test**: abacus/nbody_comp_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0; zPk0+zPk2+zPk4+zEqBk0; zPk0+zPk2+zPk4+zSqBk0
-**kmax**: zPk0: 0.2, 0.6 (scalar); zPk0+zPk2+zPk4: 0.2, 0.4, 0.6 (scalar); zPk0+zPk2+zPk4+{zBk0,zEqBk0,zSqBk0}: dynamic cuts zBk<0.2 with zPk<0.2/0.4/0.6, and zBk<0.4 with zPk<0.4
+**Date**: 2026-08-20 \
+**Type**: Abacus OOD inference \
+**Train**: abacuslike/fastpm_charm7 \
+**Test**: abacus/nbody_comp_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0; zPk0+zPk2+zPk4; zPk0+zPk2+zPk4+zBk0; zPk0+zPk2+zPk4+zEqBk0; zPk0+zPk2+zPk4+zSqBk0 \
+**kmax**: zPk0: 0.2, 0.6 (scalar); zPk0+zPk2+zPk4: 0.2, 0.4, 0.6 (scalar); zPk0+zPk2+zPk4+{zBk0,zEqBk0,zSqBk0}: dynamic cuts zBk<0.2 with zPk<0.2/0.4/0.6, and zBk<0.4 with zPk<0.4 \
 **Notes**: CHARM7 abacuslike training suite tested on the Abacus N-body suite ("comp" HOD) across the noise grid
 
 ## Overview

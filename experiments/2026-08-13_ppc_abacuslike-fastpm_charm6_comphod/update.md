@@ -1,8 +1,8 @@
 # Posterior predictive check on `abacuslike/fastpm_charm6_comphod` (zPk024, kmax=0.4)
 
-**Date**: 2026-08-13
-**Type**: Miscellaneous / posterior predictive check
-**Suite**: abacuslike fastpm_charm6_comphod, L=2000 Mpc/h, N=256, a=0.66666 (z=0.5); self-consistent, observed vector drawn from the training suite's own test split
+**Date**: 2026-08-13 \
+**Type**: Miscellaneous / posterior predictive check \
+**Suite**: abacuslike fastpm_charm6_comphod, L=2000 Mpc/h, N=256, a=0.66666 (z=0.5); self-consistent, observed vector drawn from the training suite's own test split \
 **Notes**: 100 new simulations generated for this test. Residuals are taken element-wise between the resimulated and observed feature vectors, matching how `x_ppc` and `x_obs` are used downstream.
 
 ---

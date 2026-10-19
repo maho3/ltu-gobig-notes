@@ -1,11 +1,11 @@
 # 2026-06-17 OOD — quijotelike/fastpm_charm6 → abacus1gpch/custom_hodz_gridnoise
-**Date**: 2026-06-17
-**Type**: Abacus OOD inference
-**Train**: quijotelike/fastpm_charm6
-**Test**: abacus1gpch/custom_hodz_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4
+**Date**: 2026-06-17 \
+**Type**: Abacus OOD inference \
+**Train**: quijotelike/fastpm_charm6 \
+**Test**: abacus1gpch/custom_hodz_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0, zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4 \
 **Notes**: Figures exist for zPk0 (monopole only), which is not listed in config.md. Config lists kmax up to 0.6 but figures are only available for kmax 0.2–0.4.
 
 ## Overview

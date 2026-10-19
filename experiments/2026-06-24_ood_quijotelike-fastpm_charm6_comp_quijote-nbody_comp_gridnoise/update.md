@@ -1,11 +1,11 @@
 # OOD: quijotelike/fastpm_charm6_comp → quijote/nbody_comp_gridnoise
-**Date**: 2026-06-24
-**Type**: OOD inference
-**Train**: quijotelike/fastpm_charm6_comp
-**Test**: quijote/nbody_comp_gridnoise
-**Tracer**: galaxy
-**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0
-**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6
+**Date**: 2026-06-24 \
+**Type**: OOD inference \
+**Train**: quijotelike/fastpm_charm6_comp \
+**Test**: quijote/nbody_comp_gridnoise \
+**Tracer**: galaxy \
+**Summaries**: zPk0+zPk2+zPk4, zPk0+zPk2+zPk4+zBk0, zPk0+zPk2+zPk4+zEqBk0 \
+**kmax**: 0.2, 0.3, 0.4, 0.5, 0.6 \
 **Notes**: comp model uses a wider HOD prior than hodz; expects higher posterior stdev
 
 ## Overview
