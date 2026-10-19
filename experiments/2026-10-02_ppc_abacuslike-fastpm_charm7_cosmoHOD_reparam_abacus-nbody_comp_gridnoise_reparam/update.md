@@ -36,22 +36,24 @@ Held-out blocks are cut at the campaign's own kmax (the zBk cut where one exists
 
 - The P(k)-only posteriors at kmax 0.2, and zPk0 at 0.3, pass every test. Conditioned PCA p is 0.73–0.94 with Ledoit-Wolf 0.96–1.00. Held-out PCA p is 0.41–0.63, and no individual block falls below 0.06. Their held-out Ledoit-Wolf p is 0.20–0.43.
 
+<img width="800" src="figures/concise/overview_pvalues.png" />
+
 - zPk024 at kmax 0.4 fails as in the 2026-09-22 PPC, although the observation is now noise-free:
   - The conditioned vector passes in PCA (0.75) but fails Ledoit-Wolf (0.039). zPk0 alone, and its deviation orthogonal to the top-10 PCs, are at the floor (0.020).
   - Every held-out block is at the floor in PCA, Ledoit-Wolf and the orthogonal residual. Hotelling p_F ranges from 3e-3 (zBk2) to 1.2e-7 (zQk0) and 4e-7 (zBk0).
   - Panel (e) shows the held-out failure holds from k ≈ 3 PCs kept onward.
 
-<img width="900" src="figures/zPk024k04/ppc_pcapvalue.png" />
+<img width="800" src="figures/concise/k04_blocks.png" />
 
 - In the cumulative k-bin scan, the kmax=0.4 posterior fails on zPk0 for every kmax ≥ 0.24 (p at the floor). The zPk024 kmax=0.3 posterior does not fail on the same scales: zPk0 p = 0.24 at kmax 0.32, and the combined multipoles 0.65.
   - For the kmax 0.4 campaign, zPk0 has per-bin deviations (x_obs − mean)/σ of −1.5σ to −3σ over 0.17 < k < 0.32. The predictive median sits above x_obs, by +0.013 dex (+3.0%) in P0 over 0.2 < k < 0.3.
   - The same P0 offset is +1.1% for the zPk024 kmax 0.3 posterior and +0.1% for zPk0 at 0.3.
 
-<img width="900" src="figures/zPk024k04/ppc_kbinpvalue.png" />
-
-<img width="900" src="figures/zPk024k03/ppc_kbinpvalue.png" />
+<img width="800" src="figures/concise/kbin_P0.png" />
 
 - zPk024 at kmax 0.3 passes on the conditioned P(k) but fails on the held-out bispectrum, in zBk0 (PCA 0.020, p_F = 0.018), zQk0 (p_F = 1.7e-4) and zSqBk0. Its cumulative scans show the failure only at the 22-triangle step (zQk0 at kmax 0.2: p = 0.020). The equilateral and B2 blocks pass (0.27 and 0.55).
+
+<img width="800" src="figures/concise/zPk024_heldout_blocks.png" />
 
 - Tested on the same 22 triangles (the cumulative scan's zBk ≤ 0.2 step), the held-out bispectrum fails only for zPk024 at kmax 0.4 and, partly, zPk024 at 0.3:
 
@@ -63,22 +65,24 @@ Held-out blocks are cut at the campaign's own kmax (the zBk cut where one exists
 
   For the P(k)-only campaigns, the held-out bispectrum fails at a fixed triangle set as the conditioned zPk024 cut grows from 0.3 to 0.4, but not as zPk0's cut grows from 0.2 to 0.3.
 
+  <img width="600" src="figures/concise/heldout_22tri.png" />
+
 - Conditioning on zBk0 does not make the bispectrum fit:
   - zBk0 itself is at the Ledoit-Wolf floor at {0.2, 0.2}, and at the PCA, Ledoit-Wolf and residual floors at {0.3, 0.3} (p_F = 1.3e-3).
   - The held-out zSqBk0 is at or near the floor in both (PCA 0.020, p_F = 0.002 and 0.006), and zQk0 joins it at {0.3, 0.3}.
   - In the {0.3, 0.3} bands, the predictive B0 sits above x_obs everywhere, by a median +0.026 dex, rising with triangle index to ~+0.05 dex. 58% of zBk0 bins and 67% of zSqBk0 bins lie outside the 68% band. P0 is high by +2.5% over 0.2 < k < 0.3.
 
-<img width="900" src="figures/zPk024zBk0k03/ppc_bands.png" />
+<img width="800" src="figures/concise/zBk0k03_bands.png" />
 
 - The direction of the bispectrum mismatch is the same in all seven campaigns and matches the 2026-09-22 note. The predictive median sits above the observed B0 by +0.012 to +0.028 dex (zBk0) and +0.016 to +0.039 dex (zEqBk0), growing with k or triangle index. It sits below the observed Q0 by −0.001 to −0.004 dex, against a 68% half-width of only ~0.002–0.003 dex. These offsets exceed the bands (fails the tests) only at the larger cuts.
 
-<img width="900" src="figures/zPk024k04/ppc_bands.png" />
+<img width="800" src="figures/concise/bk_direction.png" />
 
 - zPk2 passes in every campaign, whether conditioned or held out (PCA 0.86–0.98). zPk4 passes too (0.41–0.92), with its largest residual at k < 0.05 (median +0.006 to +0.023 in P4/P0).
 
-## Parameter space
+<img width="800" src="figures/concise/pk24_residuals.png" />
 
-<img width="900" src="figures/zPk024k04/ppc_corner.png" />
+## Parameter space
 
 - In every corner plot the 50 simulated parameter vectors fall inside the direct 5000-sample posterior. Nothing drifted between drawing and simulating.
 - Cosmology is recovered within ~1σ of the draw spread in Ωm: medians 0.299–0.310, against 0.307. σ8 medians are 0.832–0.849 (spread 0.017–0.077), +0.4 to +1.3σ above the true 0.820, except zPk0 at 0.3 (0.915 ± 0.074).
@@ -86,7 +90,7 @@ Held-out blocks are cut at the campaign's own kmax (the zBk cut where one exists
 - logMmin is recovered by the P(k)-only posteriors at 0.2 and 0.3 (12.55–12.72 against 12.73). It is pulled low when the posterior is conditioned on zPk at 0.4 (12.11) or on zBk0 (12.24 and 11.97). The 2026-09-28 note traces a similar low logMmin to CHARM's mass function near its 10^12.7 floor.
 - noise_transverse is inferred at 1.46–1.88 (spread 0.04–0.19) for every zPk024 posterior, against a true 0. That is consistent with the ~1.41 Mpc/h CHARM offset in the 2026-09-28 note. For zPk0 alone it is 1.19–1.80, with spreads of 0.7–1.0.
 
-<img width="700" src="figures/zPk024k04/ppc_logprob.png" />
+<img width="900" src="figures/concise/params.png" />
 
 - The log-posterior-density histograms of the 50 resimulated vectors overlap the direct-sample histograms. The ESS, max-weight and "importance-sampled data" annotations are inherited from the importance-sampling figure and hold trivially for an unweighted ensemble (ESS = N, max weight = 1/N).
 
@@ -99,7 +103,7 @@ Held-out blocks are cut at the campaign's own kmax (the zBk cut where one exists
 
 ## Additional figures
 
-Remaining figures per campaign: bands, corner, logprob and both p-value figures.
+Full figures per campaign: bands, both p-value figures, corner and logprob.
 
 <details>
 <summary>zPk0, k&lt;0.2</summary>
@@ -139,8 +143,20 @@ Remaining figures per campaign: bands, corner, logprob and both p-value figures.
 
 <img width="900" src="figures/zPk024k03/ppc_bands.png" />
 <img width="900" src="figures/zPk024k03/ppc_pcapvalue.png" />
+<img width="900" src="figures/zPk024k03/ppc_kbinpvalue.png" />
 <img width="700" src="figures/zPk024k03/ppc_corner.png" />
 <img width="500" src="figures/zPk024k03/ppc_logprob.png" />
+
+</details>
+
+<details>
+<summary>zPk024, k&lt;0.4</summary>
+
+<img width="900" src="figures/zPk024k04/ppc_bands.png" />
+<img width="900" src="figures/zPk024k04/ppc_pcapvalue.png" />
+<img width="900" src="figures/zPk024k04/ppc_kbinpvalue.png" />
+<img width="700" src="figures/zPk024k04/ppc_corner.png" />
+<img width="500" src="figures/zPk024k04/ppc_logprob.png" />
 
 </details>
 
@@ -158,6 +174,7 @@ Remaining figures per campaign: bands, corner, logprob and both p-value figures.
 <details>
 <summary>zPk024+zBk0, zPk&lt;0.3, zBk&lt;0.3</summary>
 
+<img width="900" src="figures/zPk024zBk0k03/ppc_bands.png" />
 <img width="900" src="figures/zPk024zBk0k03/ppc_pcapvalue.png" />
 <img width="900" src="figures/zPk024zBk0k03/ppc_kbinpvalue.png" />
 <img width="700" src="figures/zPk024zBk0k03/ppc_corner.png" />
